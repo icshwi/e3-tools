@@ -1,0 +1,73 @@
+Host *
+ForwardX11 yes
+ForwardAgent yes
+VisualHostKey yes
+PermitLocalCommand yes
+#IdentityFile ~/.ssh/ssh-key-example
+Compression yes
+CompressionLevel 6
+ServerAliveInterval 200
+ 
+
+Host icslab-ser01
+     Hostname 10.4.0.146
+     User icssev
+
+Host icslab-ser02
+     Hostname 10.4.0.144
+     User icssev
+
+Host icslab-ser03
+     Hostname 10.4.8.22
+     User icssev
+
+Host icslab-ser04
+     Hostname 10.4.8.23
+     User icssev
+     
+Host icslab-ecat01
+     Hostname 10.4.8.11
+     User iocuser
+
+Host icslab-ecat02
+     Hostname 10.4.8.12
+     User iocuser
+
+Host icslab-archappl01
+     Hostname 10.4.8.15
+     User aauser
+     
+Host icslab-ts01
+     Hostname 10.4.8.16
+     User timinguser
+     
+Host icslab-ts02
+     Hostname 10.4.8.27
+     User timinguser
+
+Host icslab-mtc02
+     Hostname 10.4.8.17
+     User iocuser
+     
+Host icslab-inv01
+     Hostname 10.4.8.18
+     User iocuser
+
+
+Host icslab-ipc01
+     Hostname 10.4.8.24
+     User iocuser
+     
+Host icslab-ipc02
+     Hostname 10.4.8.25
+     User iocuser
+
+Host icslab-inv02
+     Hostname 10.4.8.26
+     User iocuser
+
+    
+Host icslab-mtca-t00
+     Hostname 10.4.8.72
+     User iocuser
+
