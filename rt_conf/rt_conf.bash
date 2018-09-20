@@ -18,10 +18,12 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Friday, August 24 14:04:46 CEST 2018
+# Date    : Friday, September 21 01:01:15 CEST 2018
 #
-# version : 0.0.1
+# version : 0.0.2
 
+# Only aptitude can understand the extglob option
+shopt -s extglob
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -29,7 +31,7 @@ declare -gr SC_TOP="${SC_SCRIPT%/*}"
 
 declare -gr SUDO_CMD="sudo";
 
-
+declare -g KERNEL_VER=$(uname -r)
 
 
 function find_dist
@@ -109,7 +111,8 @@ EOF
 
     ${SUDO_CMD} rpm --import http://linuxsoft.cern.ch/cern/centos/7/os/x86_64/RPM-GPG-KEY-cern
     ${SUDO_CMD} yum update -y
-    ${SUDO_CMD} yum groupinstall RT
+    ${SUDO_CMD} yum -y install kernel-rt-devel
+    ${SUDO_CMD} yum -y groupinstall RT
 #    ${SUDO_CMD} yum install -y kernel-rt rt-tests tuned-profiles-realtime
 
 }
@@ -123,7 +126,13 @@ case "$dist" in
 	if [ "$ANSWER" == "NO" ]; then
 	    yes_or_no_to_go "Debian Stretch 9 is detected as $dist"
 	fi
-	${SUDO_CMD} apt install linux-image-rt*
+	# apt, apt-get cannot handle extglob, so aptitude
+	# in order to exclude -dbg kernel image. However, aptitude install
+	# doesn't understand extglob, only search can do. 
+	
+	${SUDO_CMD} apt install -y aptitude
+	rt_image=$(aptitude search linux-image-rt!(dbg) | awk '{print $2}')
+	${SUDO_CMD} apt install -y linux-headers-rt* ${rt_image}
 	;;
     *"CentOS Linux 7"*)
 	if [ "$ANSWER" == "NO" ]; then
