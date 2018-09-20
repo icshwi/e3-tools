@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Friday, June 15 12:13:39 CEST 2018
-#   version : 0.4.3
+#   date    : Thursday, September 20 12:49:37 CEST 2018
+#   version : 0.5.0
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -101,45 +101,44 @@ function help
 
 function module_info
 {
+    local length=;
+    
+    printf "\n>>\n"
+    if ! [ -z "${localsrc}" ]; then
+	printf ">> Your sources are located in %s.\n"  "${_E3_MOD_NAME}"
+    else
+	printf ">> Your sources are located in %s.\n" "${epics_mod_url}"
+	printf ">> git submodule will be used.\n"
+    fi
+    printf ">> \n";
+    printf "EPICS_MODULE_NAME  : %${length}s\n" "${_EPICS_MODULE_NAME}"
+    printf "E3_MODULE_SRC_PATH : %${length}s\n" "${_E3_MODULE_SRC_PATH}"
+    if ! [ -z "${remotesrc}" ]; then
+	printf "EPICS_MODULE_URL   : %${length}s\n" "${epics_mod_url}"
+    fi
+    printf "E3_TARGET_URL      : %${length}s\n" "${e3_target_url}"
 
     printf ">> \n";
-    printf "EPICS_MODULE_NAME  : %64s\n" "${_EPICS_MODULE_NAME}"
-    printf "E3_MODULE_SRC_PATH : %64s\n" "${_E3_MODULE_SRC_PATH}"
+    printf "e3 module name     : %${length}s\n" "${_E3_MOD_NAME}"
     if ! [ -z "${remotesrc}" ]; then
-	printf "EPICS_MODULE_URL   : %64s\n" "${epics_mod_url}"
+	printf "e3 module url full : %${length}s\n" "${_E3_MODULE_GITURL_FULL}"
     fi
-    printf "E3_TARGET_URL      : %64s\n" "${e3_target_url}"
-
-    printf ">> \n";
-    printf "e3 module name     : %64s\n" "${_E3_MOD_NAME}"
-    if ! [ -z "${remotesrc}" ]; then
-	printf "e3 module url full : %64s\n" "${_E3_MODULE_GITURL_FULL}"
-    fi
-    printf "e3 target url full : %64s\n" "${_E3_TGT_URL_FULL}"
+    printf "e3 target url full : %${length}s\n" "${_E3_TGT_URL_FULL}"
     printf ">> \n";
 
     
 }
 
-options=":r:m:d:l:"
+options=":m:d:"
 
 while getopts "${options}" opt; do
     case "${opt}" in
 	m)
-	    remotesrc="1";
-	    MODULE_CONF=${OPTARG} ;
-	    ;;
-	r)
-	    remotesrc="1";
 	    MODULE_CONF=${OPTARG} ;
 	    ;;
 	d)
 	    targetpath="1";
 	    E3_MODULE_PATH=${OPTARG};
-	    ;;
-	l)
-	    localsrc="1";
-	    MODULE_CONF=${OPTARG};
 	    ;;
 	*)
 	    usage
@@ -148,11 +147,6 @@ while getopts "${options}" opt; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${remotesrc}" ] ; then
-    if [ -z "${localsrc}" ]; then
-	usage
-    fi
-fi
 
 if [ -z "${targetpath}" ]; then
     E3_MODULE_PATH=${PWD}
@@ -172,11 +166,23 @@ else
     _EPICS_MODULE_NAME="$(read_file_get_string   "${MODULE_CONF}" "EPICS_MODULE_NAME:=")";
     _E3_MODULE_SRC_PATH="$(read_file_get_string  "${MODULE_CONF}" "E3_MODULE_SRC_PATH:=")";
     e3_target_url="$(read_file_get_string        "${MODULE_CONF}" "E3_TARGET_URL:=")";
-    if ! [ -z "${remotesrc}" ]; then
-	epics_mod_url="$(read_file_get_string        "${MODULE_CONF}" "EPICS_MODULE_URL:=")";
+    epics_mod_url="$(read_file_get_string        "${MODULE_CONF}" "EPICS_MODULE_URL:=")";
+    if [ -z "${epics_mod_url}" ] ; then
+	localsrc="1";
+    else
+	remotesrc="1";
     fi
-fi
 
+    if [ -z "${_EPICS_MODULE_NAME}" ] ; then
+	echo "EPICS_MODULE_NAME is not defined";
+	exit;
+    fi
+    if [ -z "${_E3_MODULE_SRC_PATH}" ] ; then
+	echo "E3_MODULE_SRC_PATH is not defined";
+	exit;
+    fi
+    
+fi
 
 _E3_MOD_NAME=e3-${_EPICS_MODULE_NAME}
 
@@ -192,17 +198,8 @@ E3_MODULE_DEST=${E3_MODULE_PATH}/${_E3_MOD_NAME};
 
 module_info;
 
-## Create the entire directory once
-#├── cmds
-#├── configure
-#│   └── E3
-#├── docs
-#├── opi
-#├── patch
-#│   └── Site
-#└── template
 
-#
+rm -rf ${E3_MODULE_DEST} ||  die 1 "We cannot remove directories ${E3_MODULE_DEST} : Please check it" ;
 mkdir -p ${E3_MODULE_DEST}/{configure/E3,patch/Site,docs,cmds,template,opi}  ||  die 1 "We cannot create directories : Please check it" ;
 
 
@@ -229,12 +226,17 @@ touch ${LOG}
 ## Going into ${E3_MODULE_DEST}
 pushd ${E3_MODULE_DEST}
 
-
 git init ||  die 1 "We cannot git init in ${_E3_MOD_NAME} : Please check it" ;
 
 
 if ! [ -z "${localsrc}" ]; then
-    mkdir -p "${_E3_MODULE_SRC_PATH}" ||  die 1 "We cannot create directories : Please check it" ;
+    _E3_MODULE_SRC_PATH+="-loc";
+    echo ${_E3_MODULE_SRC_PATH}
+    mkdir -p ${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/{Db,src} ||  die 1 "We cannot create directories : Please check it" ;
+    
+    addExampleSrc  "${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/src" 
+    addExampleDb   "${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/Db" 
+    addExampleCmds "cmds"
 else
     add_submodule "${_E3_MODULE_GITURL_FULL}" "${_E3_MODULE_SRC_PATH}" ||  die 1 "We cannot add ${_E3_MODULE_GITURL_FULL} as git submodule ${_E3_MOD_NAME} : Please check it" ;
 fi
@@ -251,7 +253,12 @@ add_e3_makefile
 ## add ${_E3_MOD_NAME}.Makefile for E3
 ## This is the template file. One should change it accroding to their
 ## corresponding module
-add_module_makefile  "${_EPICS_MODULE_NAME}"
+if ! [ -z "${localsrc}" ]; then
+    add_local_module_makefile "${_EPICS_MODULE_NAME}"
+else
+    add_module_makefile  "${_EPICS_MODULE_NAME}"
+fi
+
 
 pushd patch/Site # Enter in patch/Site
 ## add patch path and readme and so on
@@ -277,13 +284,13 @@ printf "\n";
 printf  ">>>> Do you want to add the URL ${_E3_TGT_URL_FULL} for the remote repository?\n";
 printf  "     In that mean, you already create an empty repository at ${_E3_TGT_URL_FULL}.\n";
 printf  "\n";
-read -p "     If yes, the script will push the local ${_E3_MOD_NAME} to the remote repository. (y/n)? " answer
+read -p "     If yes, the script will push the local ${_E3_MOD_NAME} to the remote repository. (y/N)? " answer
 case ${answer:0:1} in
     y|Y|yes|Yes|YES )
 	printf ">>>> We are going to the further process ...... ";
 	git remote add origin ${_E3_TGT_URL_FULL} ||  die 1 "Cannot add ${_E3_TGT_URL_FULL} in origin: Please check your git env!" ;
-	git commit -m "Init..${_E3_MOD_NAME}" ||  die 1 "We cannot commit, maybe you need to run git config user and so on." ;
-	git push -u origin master ||  die 1 "Repository is not at ${_E3_TGT_URL_FULL} : Please create it first!" ;
+	git commit -m "Init..${_E3_MOD_NAME}"     ||  die 1 "We cannot commit, maybe you need to run git config user and so on." ;
+	git push -u origin master                 ||  die 1 "Repository is not at ${_E3_TGT_URL_FULL} : Please create it first!" ;
 	
 	;;
     * )
