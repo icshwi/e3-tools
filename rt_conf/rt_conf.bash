@@ -36,7 +36,7 @@ declare -g KERNEL_VER=$(uname -r)
 declare -g GRUB_CONF=/etc/default/grub
 #declare -g GRUB_CONF=${SC_TOP}/grub
 
-declare -g SED="sed -i~"
+declare -g SED="sed i~"
 
 function find_dist
 {
@@ -200,6 +200,7 @@ function boot_parameters_conf
     printf "\n\n"
     printf "Now we are adding %s in GRUB_CMDLINE_LINUX= within the file %s\n" "${real_time_boot_parameter}" "${GRUB_CONF}"
     printf "If something goes wrong, please revert them as GRUB_CMDLINE_LINUX=\"%s\""  "${grub_cmdline_linux}"
+    printf "Please check grub~ in %s\n" "${GRUB_CONF}"
     printf "\n\n\n\n"
     
     if [ -z "$grub_cmdline_linux" ]; then
