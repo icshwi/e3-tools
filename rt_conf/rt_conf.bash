@@ -18,9 +18,9 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Friday, September 21 01:01:15 CEST 2018
+# Date    : Friday, September 21 15:13:17 CEST 2018
 #
-# version : 0.0.2
+# version : 0.0.3
 
 # Only aptitude can understand the extglob option
 shopt -s extglob
@@ -33,6 +33,10 @@ declare -gr SUDO_CMD="sudo";
 
 declare -g KERNEL_VER=$(uname -r)
 
+declare -g GRUB_CONF=/etc/default/grub
+#declare -g GRUB_CONF=${SC_TOP}/grub
+
+declare -g SED="sed -i"
 
 function find_dist
 {
@@ -51,10 +55,30 @@ function find_dist
  
 }
 
-function yes_or_no_to_go
- {
 
-    printf  "> \n";
+function find_existent_boot_parameter
+{
+
+    local GRUB_CMDLINE_LINUX
+    eval $(cat ${GRUB_CONF} | grep -E "^(GRUB_CMDLINE_LINUX)=")
+    echo "${GRUB_CMDLINE_LINUX}"
+ 
+}
+
+
+function yes_or_no_to_go
+{
+
+
+    printf  "\n";
+    
+    printf  "*************** Warning!!! ***************\n";
+    printf  "*************** Warning!!! ***************\n";
+    printf  "*************** Warning!!! ***************\n";
+    printf  ">\n";
+    printf  "> You should know how to recover them if it doesn't work!\n";
+    printf  ">\n";
+     
     printf  "> Linux RT Kernel Installation.\n"
     printf  "> \n";
     printf  "> $1\n";
@@ -66,13 +90,13 @@ function yes_or_no_to_go
 	* )
             printf ">> Stop here.\n";
 	    exit;
-    ;;
+	    ;;
     esac
 
 }
 
 
-function centos_rt_repo
+function centos_rt_conf
 {
     ${SUDO_CMD} tee /etc/yum.repos.d/CentOS-rt.repo >/dev/null <<"EOF"
 #
@@ -111,11 +135,77 @@ EOF
 
     ${SUDO_CMD} rpm --import http://linuxsoft.cern.ch/cern/centos/7/os/x86_64/RPM-GPG-KEY-cern
     ${SUDO_CMD} yum update -y
-    ${SUDO_CMD} yum -y install kernel-rt-devel
     ${SUDO_CMD} yum -y groupinstall RT
-#    ${SUDO_CMD} yum install -y kernel-rt rt-tests tuned-profiles-realtime
+    ${SUDO_CMD} yum -y install kernel-rt-devel tuned-profiles-realtime
+
 
 }
+
+
+function debian_rt_conf
+{
+    # apt, apt-get cannot handle extglob, so aptitude
+    # in order to exclude -dbg kernel image. However, aptitude install
+    # doesn't understand extglob, only search can do. 
+    rt_image=$(aptitude search linux-image-rt!(dbg) | awk '{print $2}')
+    ${SUDO_CMD} apt install -y linux-headers-rt* ${rt_image}
+    
+}
+
+function centos_pkgs
+{
+    local remove_pkg_name="postfix sendmail";
+    printf "Removing .... %s\n" ${remove_pkg_name}
+    ${SUDO_CMD} yum -y remove postfix sendmail
+    printf "Installing .... ethtool\n";
+    ${SUDO_CMD} yum -y install ethtool
+}
+
+function debian_pkgs
+{
+    local remove_pkg_name="postfix sendmail";
+    printf "Removing .... %s\n" ${remove_pkg_name}
+    ${SUDO_CMD} apt remove -y postfix sendmail
+    printf "Installing .... ethtool\n";
+    ${SUDO_CMD} apt install -y aptitude ethtool
+}
+
+function disable_system_service
+{
+    local disable_services=irqbalance
+    # disable_services+=pcscd
+    
+    printf "Disable service ... %s\n" "${disable_services}"
+    ${SUDO_CMD} systemctl stop ${disable_services}
+    ${SUDO_CMD} systemctl disable ${disable_services}
+
+    # PC CARD Daemon                                                                                                                                                                                                                                                                                                                              
+    #    ${SUDO_CMD} systemctl stop pcscd 
+    #    ${SUDO_CMD} systemctl disable pcscd
+}
+
+
+function boot_parameters_conf
+{
+
+    local grub_cmdline_linux=$(find_existent_boot_parameter)
+    
+    local real_time_boot_parameter="idle=poll intel_idle.max_cstate=0 processor.max_cstate=1"
+
+    printf "\n\n"
+    printf "Now we are adding %s in GRUB_CMDLINE_LINUX= within the file %s\n" "${real_time_boot_parameter}" "${GRUB_CONF}"
+    printf "If something goes wrong, please revert them as GRUB_CMDLINE_LINUX=\"%s\""  "${grub_cmdline_linux}"
+    printf "\n\n\n\n"
+    
+    if [ -z "$grub_cmdline_linux" ]; then
+	${SUDO_CMD} ${SED} "s/^GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"${real_time_boot_parameter}\"/g" ${GRUB_CONF}
+    else
+	${SUDO_CMD} ${SED} "s/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"${grub_cmdline_linux} ${real_time_boot_parameter}\"/g"  ${GRUB_CONF}
+    fi
+
+}
+
+
 
 ANSWER="NO"
 
@@ -126,27 +216,34 @@ case "$dist" in
 	if [ "$ANSWER" == "NO" ]; then
 	    yes_or_no_to_go "Debian Stretch 9 is detected as $dist"
 	fi
-	# apt, apt-get cannot handle extglob, so aptitude
-	# in order to exclude -dbg kernel image. However, aptitude install
-	# doesn't understand extglob, only search can do. 
-	
-	${SUDO_CMD} apt install -y aptitude
-	rt_image=$(aptitude search linux-image-rt!(dbg) | awk '{print $2}')
-	${SUDO_CMD} apt install -y linux-headers-rt* ${rt_image}
+	debian_pkgs
+	debian_rt_conf
+	boot_parameters_conf
+	${SUDO_CMD} update-grub
 	;;
     *"CentOS Linux 7"*)
 	if [ "$ANSWER" == "NO" ]; then
 	    yes_or_no_to_go "CentOS Linux 7 is detected as $dist"
 	fi
-	centos_rt_repo;
+	centos_pkgs;
+	centos_rt_conf;
+	boot_parameters_conf
+	${SUDO_CMD} grub2-mkconfig –o /boot/grub2/grub.cfg
 	;;
     *)
 	printf "\n";
 	printf "Doesn't support the detected $dist\n";
 	printf "Please contact jeonghan.lee@gmail.com\n";
 	printf "\n";
-
+	exit;
 	;;
 esac
+
+disable_system_service
+
+
+printf "\n"
+printf "Reboot your system in order to use the RT kernel\n";
+printf "\n"
 
 exit
