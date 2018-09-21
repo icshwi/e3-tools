@@ -18,9 +18,9 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Friday, September 21 15:13:17 CEST 2018
+# Date    : Friday, September 21 15:38:52 CEST 2018
 #
-# version : 0.0.3
+# version : 0.0.4
 
 # Only aptitude can understand the extglob option
 shopt -s extglob
@@ -36,7 +36,7 @@ declare -g KERNEL_VER=$(uname -r)
 declare -g GRUB_CONF=/etc/default/grub
 #declare -g GRUB_CONF=${SC_TOP}/grub
 
-declare -g SED="sed -i"
+declare -g SED="sed -i~"
 
 function find_dist
 {
@@ -188,7 +188,7 @@ function disable_system_service
 function boot_parameters_conf
 {
 
-    local grub_cmdline_linux=$(find_existent_boot_parameter)
+    local grub_cmdline_linux="$(find_existent_boot_parameter)"
     
     local real_time_boot_parameter="idle=poll intel_idle.max_cstate=0 processor.max_cstate=1"
     # 
@@ -203,9 +203,9 @@ function boot_parameters_conf
     printf "\n\n\n\n"
     
     if [ -z "$grub_cmdline_linux" ]; then
-	${SUDO_CMD} ${SED} "s/^GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"${real_time_boot_parameter}\"/g" ${GRUB_CONF}
+	${SUDO_CMD} ${SED} "s:^GRUB_CMDLINE_LINUX=\"\":GRUB_CMDLINE_LINUX=\"${real_time_boot_parameter}\":g" ${GRUB_CONF}
     else
-	${SUDO_CMD} ${SED} "s/^GRUB_CMDLINE_LINUX=.*/GRUB_CMDLINE_LINUX=\"${grub_cmdline_linux} ${real_time_boot_parameter}\"/g"  ${GRUB_CONF}
+	${SUDO_CMD} ${SED} "s:^GRUB_CMDLINE_LINUX=.*:GRUB_CMDLINE_LINUX=\"${grub_cmdline_linux} ${real_time_boot_parameter}\":g"  ${GRUB_CONF}
     fi
 
 }
