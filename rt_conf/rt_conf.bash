@@ -191,7 +191,12 @@ function boot_parameters_conf
     local grub_cmdline_linux=$(find_existent_boot_parameter)
     
     local real_time_boot_parameter="idle=poll intel_idle.max_cstate=0 processor.max_cstate=1"
-
+    # 
+    # idle=pool               : forces the clock to aviod entering the idle state
+    # processor.max_cstate=1  : prevents the clock from entering deeper C-states (energy saving mode), so it does not become out of sync
+    # intel_idle.max_cstate=0 : ensures sleep states are not entered:
+    # * Red Hat Enterprise Linux for Real Time 7 Tuning Guide
+    # * https://gist.github.com/wmealing/2dd2b543c4d3cff6cab7
     printf "\n\n"
     printf "Now we are adding %s in GRUB_CMDLINE_LINUX= within the file %s\n" "${real_time_boot_parameter}" "${GRUB_CONF}"
     printf "If something goes wrong, please revert them as GRUB_CMDLINE_LINUX=\"%s\""  "${grub_cmdline_linux}"
