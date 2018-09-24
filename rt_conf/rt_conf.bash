@@ -18,9 +18,9 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Friday, September 21 15:38:52 CEST 2018
+# Date    : Tuesday, September 25 01:38:20 CEST 2018
 #
-# version : 0.0.4
+# version : 0.0.5
 
 # Only aptitude can understand the extglob option
 shopt -s extglob
@@ -173,15 +173,12 @@ function debian_pkgs
 function disable_system_service
 {
     local disable_services=irqbalance
-    # disable_services+=pcscd
+    disable_services+=pcscd
     
     printf "Disable service ... %s\n" "${disable_services}"
     ${SUDO_CMD} systemctl stop ${disable_services}
     ${SUDO_CMD} systemctl disable ${disable_services}
 
-    # PC CARD Daemon                                                                                                                                                                                                                                                                                                                              
-    #    ${SUDO_CMD} systemctl stop pcscd 
-    #    ${SUDO_CMD} systemctl disable pcscd
 }
 
 
@@ -190,11 +187,12 @@ function boot_parameters_conf
 
     local grub_cmdline_linux="$(find_existent_boot_parameter)"
     
-    local real_time_boot_parameter="idle=poll intel_idle.max_cstate=0 processor.max_cstate=1"
+    local real_time_boot_parameter="idle=poll intel_idle.max_cstate=0 processor.max_cstate=1 skew_tick=1"
     # 
-    # idle=pool               : forces the clock to aviod entering the idle state
+    # idle=pool               : forces the TSC clock to aviod entering the idle state
     # processor.max_cstate=1  : prevents the clock from entering deeper C-states (energy saving mode), so it does not become out of sync
     # intel_idle.max_cstate=0 : ensures sleep states are not entered:
+    # skew_tick=1             : Reduce CPU performace spikes
     # * Red Hat Enterprise Linux for Real Time 7 Tuning Guide
     # * https://gist.github.com/wmealing/2dd2b543c4d3cff6cab7
     printf "\n\n"
