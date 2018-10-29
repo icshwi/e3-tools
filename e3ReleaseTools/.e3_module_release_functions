@@ -1,0 +1,65 @@
+#!/bin/bash
+
+
+EXIST=1
+NON_EXIST=0
+
+
+function pushd { builtin pushd "$@" > /dev/null; }
+function popd  { builtin popd  "$@" > /dev/null; }
+
+function die
+{
+    error=${1:-1}
+    ## exits with 1 if error number not given
+    shift
+    [ -n "$*" ] &&
+	printf "%s%s: %s\n" "$scriptname" ${version:+" ($version)"} "$*" >&2
+    exit "$error"
+}
+
+
+## if [[ $(checkIfFile "${release_file}") -eq "$NON_EXIST" ]]; then
+#   NON_EXIT
+## fi
+
+function checkIfFile
+{
+    local file=$1
+    local result=""
+    if [ ! -e "$file" ]; then
+	result=$NON_EXIST
+	# doesn't exist
+    else
+	result=$EXIST
+	# exist
+    fi
+    echo "${result}"	 
+};
+
+
+
+
+# Usage :
+# e3_version="$(read_file_get_string  "${file_name}" "E3_VERSION:=")";
+# It ignores the # character
+# 
+function read_file_get_string
+{
+    local FILENAME=$1
+    local PREFIX=$2
+
+    local val=""
+    while IFS= read -r line; do
+	if [ "$line" ]; then
+	    [[ "$line" =~ ^#.*$ ]] && continue
+	    if [[ $line =~ "${PREFIX}" ]] ; then
+	     	val=${line#$PREFIX}
+	    fi
+	fi
+    done < ${FILENAME}
+
+    echo "$val"
+}
+
+
