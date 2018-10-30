@@ -1,0 +1,19 @@
+[alias]
+        st = status
+        co = checkout
+        ci = commit
+        br = branch
+        hist = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short 
+        type = cat-file -t 
+        dump = cat-file -p
+[color] 
+        diff = auto
+        status = auto
+        compbranch = auto
+
+[credential]
+        helper = cache --timeout=3000
+
+[push]
+        default = simple
+
