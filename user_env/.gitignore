@@ -1,0 +1,9 @@
+*.aux
+*.dvi
+*.log
+*.pdf
+*~
+\#.*\#
+ssh-key*
+known_hosts*
+builddir*
