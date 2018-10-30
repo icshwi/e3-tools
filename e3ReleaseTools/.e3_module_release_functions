@@ -46,20 +46,46 @@ function checkIfFile
 # 
 function read_file_get_string
 {
-    local FILENAME=$1
-    local PREFIX=$2
+    local FILENAME="$1"
+    local PREFIX="$2"
+
+    local val=""
+    while IFS= read -r line; do
+	if [ "$line" ]; then
+	    [[ "$line" =~ ^#.*$ ]] && continue
+	    if [[ "$line" =~ "${PREFIX}" ]] ; then
+	     	val=${line#"${PREFIX}"}
+	    fi
+	fi
+    done < ${FILENAME}
+    echo "${val// }"
+
+}
+
+
+
+
+# Usage :
+# e3_version="$(read_file_get_string  "${file_name}" "E3_VERSION:=")";
+# It ignores the # character
+# 
+function read_file_get_string_debug
+{
+    local FILENAME="$1"
+    local PREFIX="$2"
 
     local val=""
     while IFS= read -r line; do
 	if [ "$line" ]; then
 	    [[ "$line" =~ ^#.*$ ]] && continue
 	    if [[ $line =~ "${PREFIX}" ]] ; then
-	     	val=${line#$PREFIX}
+	     	val=${line#"$PREFIX"}
 	    fi
 	fi
     done < ${FILENAME}
 
     echo "$val"
 }
+
 
 

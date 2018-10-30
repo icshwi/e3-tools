@@ -24,3 +24,8 @@ bash-7.0.1.1/require/3.0.3/siteMods/a_module/1.0.0   T=t4
 where T=tx shows the time when we install that version of a module.
 
 Therefore, MODULE version should be constant in the time domain amd BASE and REQUIRE versions should be changed within e3 module reposiotory according to the selected time along the time domain within a specific MODULE version. In other words, BASE and REQUIRE versions are functions of time respectively within each MODULE version, which can be represented as a limited parallel universe of a module. In order to fullfil this requirement, the MODULE version should be used as the e3 repository branch name. 
+
+
+# Assumption
+
+To run this script on the current "up-to-date" master branch is the strong assumption. If we forget to run it, that changes will be gone in the history in the master branch. In order to minimize this event, it would be better to do this within the continouse integration with each git commit automatically within each e3 module repository by travis-ci. 
