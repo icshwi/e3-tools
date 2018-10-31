@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Wednesday, October 31 21:52:23 CET 2018
-#   version : 0.0.3
+#   date    : Thursday, November  1 00:32:43 CET 2018
+#   version : 0.0.4
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -31,7 +31,8 @@ declare -gr SC_HASH="$(git rev-parse --short HEAD)"
 
 
 declare -gr DEFAULT_BRANCH="master"
-
+declare -g  IsRequire=""
+declare -g  IsBase=""
 declare -g  VERSION_STRING=""
 declare -g  MODULE_BRANCH=""
 declare -g  MODULE_TAG_IN_BRANCH=""
@@ -149,8 +150,13 @@ esac
 
 MODULE_TOP=${PWD}
 
-CONFIG_MODULE=${MODULE_TOP}/configure/CONFIG_MODULE
-RELEASE_BASE=${MODULE_TOP}/configure/RELEASE
+
+if [[ "$(basename ${MODULE_TOP})" =~ "e3-require" ]] ; then
+    IsRequire="1";
+elif [[ "$(basename ${MODULE_TOP})" =~ "e3-base" ]] ; then
+    IsBase="1";
+fi
+
 
 ### BE in ${BRANCH}
 ### However, we stop here if ${BRANCH} doesn't exist (Yes, master is always there)
@@ -169,62 +175,99 @@ fi
 
 
 
+
 ## Assume three VERSIONs are defined one of both
 ## 
 ## E3_MODULE_VERSION:=        and   E3_MODULE_VERSION=
 ## EPICS_BASE:=               and   EPICS_BASE=
 ## E3_REQUIRE_VERSION:=       and   E3_REQUIRE_VERSION=
-if [[ $(checkIfFile "${CONFIG_MODULE}") -eq "NON_EXIST" ]]; then
-    printf "Maybe you are not in any module directory\n";
-    die 1 "ERROR : we cannot find the file >>${CONFIG_MODULE}<<";
-else
-    module_version="$(read_file_get_string   "${CONFIG_MODULE}" "E3_MODULE_VERSION:=")";
-    if [ -z "${module_version}" ]; then
-	module_version="$(read_file_get_string   "${CONFIG_MODULE}" "E3_MODULE_VERSION=")";
-	if [ -z "${module_version}" ]; then
-	    die 1 "ERROR 2nd : we cannot read E3_MODULE_VERSION properly, please check ${CONFIG_MODULE}"
+
+
+if ! [ -z "${IsBase}" ]; then
+
+    CONFIG_BASE=${MODULE_TOP}/configure/CONFIG_BASE
+
+    if [[ $(checkIfFile "${CONFIG_BASE}") -eq "NON_EXIST" ]]; then
+	die 1 "ERROR : we cannot find the file >>${CONFIG_BASE}<<";
+    else
+	base_version="$(read_file_get_string "${CONFIG_BASE}" "E3_BASE_VERSION:=")";
+	if [ -z "${base_version}" ]; then
+	    base_version="$(read_file_get_string  "${CONFIG_BASE}" "E3_BASE_VERSION=")";
+	    if [ -z "${base_version}" ]; then
+		die 1 "ERROR 2nd : we cannot read E3_BASE_VERSION properly, please check ${CONFIG_BASE}"
+	    fi
 	fi
     fi
-	   
-fi
-
-
-if [[ $(checkIfFile "${RELEASE_BASE}") -eq "NON_EXIST" ]]; then
-    die 1 "ERROR : we cannot find the file >>${RELEASE_BASE}<<";
+    module_version=${base_version}
+    require_version="NA"
 else
-    base_path="$(read_file_get_string  "${RELEASE_BASE}" "EPICS_BASE:=")";
     
-    if [ -z "${base_path}" ]; then
-	base_path="$(read_file_get_string  "${RELEASE_BASE}" "EPICS_BASE=")";
+    CONFIG_MODULE=${MODULE_TOP}/configure/CONFIG_MODULE
+    RELEASE_BASE=${MODULE_TOP}/configure/RELEASE
+
+
+    if [[ $(checkIfFile "${RELEASE_BASE}") -eq "NON_EXIST" ]]; then
+	die 1 "ERROR : we cannot find the file >>${RELEASE_BASE}<<";
+    else
+	base_path="$(read_file_get_string  "${RELEASE_BASE}" "EPICS_BASE:=")";
+	
 	if [ -z "${base_path}" ]; then
-	    die 1 "ERROR 2nd : we cannot read EPICS_BASE properly, please check ${RELEASE_BASE}"
+	    base_path="$(read_file_get_string  "${RELEASE_BASE}" "EPICS_BASE=")";
+	    if [ -z "${base_path}" ]; then
+		die 1 "ERROR 2nd : we cannot read EPICS_BASE properly, please check ${RELEASE_BASE}"
+	    fi
 	fi
+	# Remove all except base-N.N.N.N, and select after $base_prefix (base-)
+	# 
+	base_version=$(basename ${base_path})
+	base_version=${base_version#${base_prefix}}
+
     fi
-    # Remove all except base-N.N.N.N, and select after $base_prefix (base-)
-    # 
-    base_version=$(basename ${base_path})
-    base_version=${base_version#${base_prefix}}
 
-fi
-
-if [[ $(checkIfFile "${RELEASE_BASE}") -eq "NON_EXIST" ]]; then
-    die 1 "ERROR at ${FUNCNAME[*]} : we cannot find the file >>${RELEASE_BASE}<<";
-else
-    require_version="$(read_file_get_string "${RELEASE_BASE}" "E3_REQUIRE_VERSION:=")";
-    if [ -z "${require_version}" ]; then
-     	require_version="$(read_file_get_string "${RELEASE_BASE}" "E3_REQUIRE_VERSION=")";
+    if [[ $(checkIfFile "${RELEASE_BASE}") -eq "NON_EXIST" ]]; then
+	die 1 "ERROR at ${FUNCNAME[*]} : we cannot find the file >>${RELEASE_BASE}<<";
+    else
+	require_version="$(read_file_get_string "${RELEASE_BASE}" "E3_REQUIRE_VERSION:=")";
 	if [ -z "${require_version}" ]; then
-     	    die 1 "ERROR 2nd : we cannot read E3_REQUIRE_VERSION properly, please check ${RELEASE_BASE}"
-     	fi
+     	    require_version="$(read_file_get_string "${RELEASE_BASE}" "E3_REQUIRE_VERSION=")";
+	    if [ -z "${require_version}" ]; then
+     		die 1 "ERROR 2nd : we cannot read E3_REQUIRE_VERSION properly, please check ${RELEASE_BASE}"
+     	    fi
+	fi
+	
+	
     fi
+
+
+    if [ -z "${IsRequire}" ]; then
+	if [[ $(checkIfFile "${CONFIG_MODULE}") -eq "NON_EXIST" ]]; then
+	    printf "Maybe you are not in any module directory\n";
+	    die 1 "ERROR : we cannot find the file >>${CONFIG_MODULE}<<";
+	else
+	    module_version="$(read_file_get_string   "${CONFIG_MODULE}" "E3_MODULE_VERSION:=")";
+	    if [ -z "${module_version}" ]; then
+		module_version="$(read_file_get_string   "${CONFIG_MODULE}" "E3_MODULE_VERSION=")";
+		if [ -z "${module_version}" ]; then
+		    die 1 "ERROR 2nd : we cannot read E3_MODULE_VERSION properly, please check ${CONFIG_MODULE}"
+		fi
+	    fi
+	    
+	fi
+    else
+	module_version=${require_version}
+    fi
+
     
-	   
+
+
 fi
+
 
 printf "\n"
 printf "E3 MODULE VERSION  : %30s\n" "${module_version}"
 printf "EPICS BASE VERSION : %30s\n" "${base_version}"
 printf "E3 REQUIRE VERSION : %30s\n" "${require_version}"
+
 
 # 3.15.5-3.0.0/1.0.0-1810302033
 # use / in order to separate it from each other group
