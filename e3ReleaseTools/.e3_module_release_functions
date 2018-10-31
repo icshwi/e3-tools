@@ -89,3 +89,52 @@ function read_file_get_string_debug
 
 
 
+function yes_or_no_to_go
+{
+
+    printf  ">>\n";
+    printf  "  Now you are entering the release e3 module...\n"
+    printf  "  You should aware what you are doing now ....\n";
+    printf  "  If you are not sure, please stop this procedure immediately\n";
+
+    print_options
+    
+    printf  "\n";
+    read -p ">> Do you want to continue (y/N)? " answer
+    case ${answer:0:1} in
+	y|Y )
+	    printf "\n"
+	    ;;
+	* )
+            printf ">> Stop here. \n";
+	    exit;
+	    ;;
+    esac
+
+}
+
+
+function usage
+{
+    {
+	echo "";
+	echo "Usage : $0 [-b <branch_name>] release" ;
+	echo "";
+	echo "            -b : default, ${DEFAULT_BRANCH}"
+	echo ""
+	
+    } 1>&2;
+    exit 1; 
+}
+
+
+function print_options
+{
+    printf ">>\n"
+    printf "  We've found your working environment as follows:\n";
+    printf "  \n";
+    printf "  Working Branch      : %s\n" "${BRANCH}"
+    printf "  Working PATH        : %s\n" "${PWD}"
+}
+
+

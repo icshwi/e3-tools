@@ -21,14 +21,13 @@
 #   email   : jeonghan.lee@gmail.com
 #   date    : Thursday, November  1 00:32:43 CET 2018
 #   version : 0.0.4
-
+#
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
 declare -gr SC_TOP="$(dirname "$SC_SCRIPT")"
 declare -gr SC_LOGDATE="$(date +%y%m%d%H%M)"
 #declare -gr SC_USER="$(whoami)"
 declare -gr SC_HASH="$(git rev-parse --short HEAD)"
-
 
 declare -gr DEFAULT_BRANCH="master"
 declare -g  IsRequire=""
@@ -46,65 +45,10 @@ declare -ga tag_list=()
 
 . ${SC_TOP}/.e3_module_release_functions
 
-
-
-function yes_or_no_to_go
-{
-
-    printf  ">>\n";
-    printf  "  Now you are entering the release e3 module...\n"
-    printf  "  You should aware what you are doing now ....\n";
-    printf  "  If you are not sure, please stop this procedure immediately\n";
-
-    print_options
-    
-    printf  "\n";
-    read -p ">> Do you want to continue (y/N)? " answer
-    case ${answer:0:1} in
-	y|Y )
-	    printf "\n"
-	    ;;
-	* )
-            printf ">> Stop here. \n";
-	    exit;
-    ;;
-    esac
-
-}
-
-
-function usage
-{
-    {
-	echo "";
-	echo "Usage : $0 [-b <branch_name>] release" ;
-	echo "";
-	echo "            -b : default, ${DEFAULT_BRANCH}"
-	echo ""
-	
-    } 1>&2;
-    exit 1; 
-}
-
-
-function print_options
-{
-    printf ">>\n"
-    printf "  We've found your working environment as follows:\n";
-    printf "  \n";
-    printf "  Working Branch      : %s\n" "${BRANCH}"
-    printf "  Working PATH        : %s\n" "${PWD}"
-}
-
-
-
-
-
 declare -g BRANCH=""
 
 options=":b:h:y"
 ANSWER="NO"
-
 
 while getopts "${options}" opt; do
     case "${opt}" in
@@ -126,7 +70,7 @@ shift $((OPTIND-1))
 
 
 if [ -z "$BRANCH" ]; then
-#    printf ">> No TARGET PATH is defined, use the default one %s\n" "${DEFAULT_TAGET_PATH}"
+    #    printf ">> No BRANCH is defined, use the default one %s\n" "${DEFAULT_BRANCH}"
     BRANCH=${DEFAULT_BRANCH}
 fi
 
@@ -158,15 +102,14 @@ elif [[ "$(basename ${MODULE_TOP})" =~ "e3-base" ]] ; then
 fi
 
 
-### BE in ${BRANCH}
-### However, we stop here if ${BRANCH} doesn't exist (Yes, master is always there)
+## BE in ${BRANCH}
+## However, we stop here if ${BRANCH} doesn't exist (Yes, master is always there)
 if ! git checkout ${BRANCH}; then
     echo -e >&2 "\n>>\n  Please check ${PWD}.\n  It might not be a git repository or we cannot find the branch ${BRANCH}.";
     exit 1
 fi
 
-
-### STOP if any changes are exist in ${BRANCH}
+## STOP if any changes are exist in ${BRANCH}
 any_changes=$(git status --porcelain --untracked-files=no)
 
 if ! [ -z "${any_changes}" ] ; then
@@ -174,13 +117,14 @@ if ! [ -z "${any_changes}" ] ; then
 fi
 
 
-
-
 ## Assume three VERSIONs are defined one of both
 ## 
 ## E3_MODULE_VERSION:=        and   E3_MODULE_VERSION=
 ## EPICS_BASE:=               and   EPICS_BASE=
 ## E3_REQUIRE_VERSION:=       and   E3_REQUIRE_VERSION=
+
+## If a repository is e3-base
+## E3_BASE_VERSION:=          and   E3_BASE_VERSION=
 
 
 if ! [ -z "${IsBase}" ]; then
@@ -200,12 +144,13 @@ if ! [ -z "${IsBase}" ]; then
     fi
     module_version=${base_version}
     require_version="NA"
+    
 else
     
     CONFIG_MODULE=${MODULE_TOP}/configure/CONFIG_MODULE
     RELEASE_BASE=${MODULE_TOP}/configure/RELEASE
 
-
+    # RELEASE_BASE : EPICS_BASE
     if [[ $(checkIfFile "${RELEASE_BASE}") -eq "NON_EXIST" ]]; then
 	die 1 "ERROR : we cannot find the file >>${RELEASE_BASE}<<";
     else
@@ -224,6 +169,7 @@ else
 
     fi
 
+    # RELEASE_BASE : E3_REQUIRE_VERSION
     if [[ $(checkIfFile "${RELEASE_BASE}") -eq "NON_EXIST" ]]; then
 	die 1 "ERROR at ${FUNCNAME[*]} : we cannot find the file >>${RELEASE_BASE}<<";
     else
@@ -234,11 +180,9 @@ else
      		die 1 "ERROR 2nd : we cannot read E3_REQUIRE_VERSION properly, please check ${RELEASE_BASE}"
      	    fi
 	fi
-	
-	
     fi
 
-
+    # CONFIG_MODULE : E3_MODULE_VERSION
     if [ -z "${IsRequire}" ]; then
 	if [[ $(checkIfFile "${CONFIG_MODULE}") -eq "NON_EXIST" ]]; then
 	    printf "Maybe you are not in any module directory\n";
@@ -251,48 +195,48 @@ else
 		    die 1 "ERROR 2nd : we cannot read E3_MODULE_VERSION properly, please check ${CONFIG_MODULE}"
 		fi
 	    fi
-	    
 	fi
     else
+	# If a repository is e3-require, we use the require version as module version
+	#
 	module_version=${require_version}
     fi
-
-    
-
-
-fi
+fi #  if ! [ -z "${IsBase}" ]; then
 
 
 printf "\n"
-printf "E3 MODULE VERSION  : %30s\n" "${module_version}"
-printf "EPICS BASE VERSION : %30s\n" "${base_version}"
-printf "E3 REQUIRE VERSION : %30s\n" "${require_version}"
+printf "E3 MODULE VERSION  : %34s\n" "${module_version}"
+printf "EPICS BASE VERSION : %34s\n" "${base_version}"
+printf "E3 REQUIRE VERSION : %34s\n" "${require_version}"
 
 
-# 3.15.5-3.0.0/1.0.0-1810302033
-# use / in order to separate it from each other group
-# $(dirname $MODULE_TAG_IN_BRANCH) returns base-req
-# $(basename $MODULE_TAG_IN_BRANCH) returns module-date
+## MODULE  : 3.15.5-3.0.0/1.0.0-1810302033 : Branch 1.0.0
+## REQUIRE : 3.15.5-3.0.0/3.0.0-1811010032 : Branch 3.0.0
+## BASE    : 3.15.5-NA/3.15.5-1811010031   : Branch 3.15.5
+## 
+## use / in order to separate it from each other group
+## $(dirname $MODULE_TAG_IN_BRANCH) returns base-req
+## $(basename $MODULE_TAG_IN_BRANCH) returns module-date
+##
+
 MODULE_TAG_IN_BRANCH+=${base_version}
 MODULE_TAG_IN_BRANCH+="-"
 MODULE_TAG_IN_BRANCH+=${require_version}
 MODULE_TAG_IN_BRANCH+="/"
 MODULE_TAG_IN_BRANCH+=${module_version}
 MODULE_TAG_IN_BRANCH+="-"
-### YYMMDD-HHMM
 MODULE_TAG_IN_BRANCH+=${SC_LOGDATE}
 
 MODULE_BRANCH_NAME=${module_version}
 
 printf "\n"
-printf "MODULE BRANCH      : %30s\n"   "$MODULE_BRANCH_NAME"
-printf "MODULE TAG         : %30s\n\n" "$MODULE_TAG_IN_BRANCH"
+printf "MODULE BRANCH      : %34s\n"   "$MODULE_BRANCH_NAME"
+printf "MODULE TAG         : %34s\n\n" "$MODULE_TAG_IN_BRANCH"
 
 
 if [[ "$BRANCH" =~ "master" ]] ; then
     ### Check whether a branch with the module version or not
     branch_exist=$(git rev-parse --verify --quiet $MODULE_BRANCH_NAME)
-    
     if [ -z "${branch_exist}" ] ; then
 	# There is no branch, so create it
 	# In this step, we don't have any conflict theoritically.
@@ -303,14 +247,12 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 	# The first time, we also need to do git tag in that branch
 	git tag -a $MODULE_TAG_IN_BRANCH -m "add $MODULE_TAG_IN_BRANCH"
 	git push origin --tags
-	
     else
 	printf ">>\n";
 	printf "  The branch %s exists.\n" "${MODULE_BRANCH_NAME}"
 	printf "  So, we end here.\n"
 	printf ">>\n";
     fi
-
 else
     ### Check the existent tag in the $BRANCH
     tag_list=$(git tag -l |grep "/${MODULE_BRANCH_NAME}-")
@@ -340,8 +282,6 @@ else
 	printf "\n"
 
     fi
-    
-    
-fi
+fi # [[ "$BRANCH" =~ "master" ]] ; then
 
 exit
