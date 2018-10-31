@@ -1,27 +1,23 @@
 e3-tools
 ===
+
+# e3ReleaseTools
+
+[README.md](./e3ReleaseTools/README.md) in more detail. 
+  
 # e3TemplateGenerator
 
-The e3 module template generator. Please look at README file in the directory. 
+[README.md](./e3TemplateGenerator/README.md) in more detail. 
 
 # rt_conf
 
-Linux RT PREEMPT Kernel configuration tool for CentOS 7 and Debian 9.
+[README.md](./rt_conf/README.md) in more detail. 
 
-* For Debian 9, it has its own RT kernel images (main)
-* For CentOS 7, it has its own RT kernel images [1]. However, it breaks CentOS package dependency from time to time, because of the slowness of the rt kernel. Here, CERN CentOS 7 rt repository will be used [2] 
+# git_helper_scripts
 
+# scripts
 
+# user_env
 
-# Reference 
-[1] One should create CentOS-rt.repo in /etc/yum.repos.d/ as follows:
+[README.md](./user_env/README.md) in more detail. 
 
-```
-[rt]
-name=CentOS-7 - rt
-baseurl=http://mirror.centos.org/centos/\$releasever/rt/\$basearch/
-gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
-```
-
-[2] http://linux.web.cern.ch/linux/centos7/
