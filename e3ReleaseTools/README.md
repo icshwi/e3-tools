@@ -67,11 +67,8 @@ $ e3ModuleRelease.bash -b 2.7.14p release
 * If the "released" tag is found, it will end and will do nothing.
 
 
-
-
 This script is only valid for the evolving Master branch. The main goal is to create the MODULE version branch if that branch doesn't exist at all.
 
 
 # Assumption
-
-To run this script on the current "up-to-date" master or existent (module version) branch is the if-and-if-only strong assumption. 
+We assume that we run this script on the "up-to-date" master with all "up-to-date" existent branches. 
