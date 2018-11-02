@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Friday, November  2 02:22:20 CET 2018
-#   version : 0.0.5
+#   date    : Friday, November  2 02:35:07 CET 2018
+#   version : 0.0.6
 #
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -249,6 +249,8 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 	# The first time, we also need to do git tag in that branch
 	git tag -a $MODULE_TAG_IN_BRANCH -m "add $MODULE_TAG_IN_BRANCH"
 	git push origin --tags
+	git checkout ${BRANCH}
+	
     else
 	printf ">>\n";
 	printf "  The branch %s exists.\n" "${MODULE_BRANCH_NAME}"
