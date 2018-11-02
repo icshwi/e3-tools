@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Thursday, November  1 00:32:43 CET 2018
-#   version : 0.0.4
+#   date    : Friday, November  2 02:22:20 CET 2018
+#   version : 0.0.5
 #
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -75,22 +75,7 @@ if [ -z "$BRANCH" ]; then
 fi
 
 
-case "$1" in
-
-    release)
-	if [ "$ANSWER" == "NO" ]; then
-	    yes_or_no_to_go
-	else
-	    print_options
-	fi
-	;;
-    *)
-	usage
-	;;
-
-esac
-
-
+print_options
 
 MODULE_TOP=${PWD}
 
@@ -232,6 +217,23 @@ MODULE_BRANCH_NAME=${module_version}
 printf "\n"
 printf "MODULE BRANCH      : %34s\n"   "$MODULE_BRANCH_NAME"
 printf "MODULE TAG         : %34s\n\n" "$MODULE_TAG_IN_BRANCH"
+
+
+case "$1" in
+
+    release)
+	if [ "$ANSWER" == "NO" ]; then
+	    yes_or_no_to_go
+	else
+	    echo ""
+	fi
+	;;
+    *)
+	usage
+	;;
+
+esac
+
 
 
 if [[ "$BRANCH" =~ "master" ]] ; then
