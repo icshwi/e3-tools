@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Friday, November  2 02:35:07 CET 2018
-#   version : 0.0.6
+#   date    : Friday, November  2 16:06:25 CET 2018
+#   version : 0.0.7
 #
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -79,6 +79,8 @@ print_options
 
 MODULE_TOP=${PWD}
 
+# Get all branches
+git fetch origin
 
 if [[ "$(basename ${MODULE_TOP})" =~ "e3-require" ]] ; then
     IsRequire="1";
@@ -223,6 +225,8 @@ case "$1" in
 
     release)
 	if [ "$ANSWER" == "NO" ]; then
+	    printf ">>\n";
+	    printf "  Now you are entering the release e3 module...\n"
 	    yes_or_no_to_go
 	else
 	    echo ""
@@ -243,13 +247,41 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 	# There is no branch, so create it
 	# In this step, we don't have any conflict theoritically.
 	#
+	printf ">>\n";
+	printf "  No Branch %s is found, creating ....\n" "${MODULE_BRANCH_NAME}"
+	printf "\n";
+	
 	git checkout -b ${MODULE_BRANCH_NAME}
 	git commit -m "adding ${MODULE_BRANCH_NAME}";
-	git push origin ${MODULE_BRANCH_NAME};
 	# The first time, we also need to do git tag in that branch
+	printf ">>\n";
+	printf "  Creating .... the tag %s\n" "$MODULE_TAG_IN_BRANCH"
 	git tag -a $MODULE_TAG_IN_BRANCH -m "add $MODULE_TAG_IN_BRANCH"
-	git push origin --tags
+
+	printf ">>\n";
+	if [ "$ANSWER" == "NO" ]; then
+	    printf "  You can push these changes to the remote repository...\n"
+	    read -p "  Do you want to continue (y/N)? " answer
+	    case ${answer:0:1} in
+		y|Y )
+		    git push origin ${MODULE_BRANCH_NAME};
+		    git push origin ${MODULE_TAG_IN_BRANCH};
+		    ;;
+		* )
+		    printf ">>\n"
+		    printf "  One can push these changes later through \n"
+		    printf "  git push origin %s\n" "${MODULE_BRANCH_NAME}";
+		    printf "  git push origin --tags\n";
+   		    ;;
+	    esac
+	else
+	    git push origin ${MODULE_BRANCH_NAME};
+	    git push origin ${MODULE_TAG_IN_BRANCH};
+	fi
+	
+	printf ">> \n"
 	git checkout ${BRANCH}
+	printf "\n";
 	
     else
 	printf ">>\n";
@@ -276,8 +308,23 @@ else
     if [ "$found" -eq 0 ]; then
 	# Nothing we find, so we create a tag for the current branch configuration.
 	git tag -a $MODULE_TAG_IN_BRANCH -m "add $MODULE_TAG_IN_BRANCH"
-	git push origin --tags
-
+	printf ">>\n";
+	if [ "$ANSWER" == "NO" ]; then
+	    printf "  You can push these changes to the remote repository...\n"
+	    read -p "  Do you want to continue (y/N)? " answer
+	    case ${answer:0:1} in
+		y|Y )
+		    git push origin ${MODULE_TAG_IN_BRANCH};
+		    ;;
+		* )
+		    printf ">>\n"
+		    printf "  One can push these changes later through \n"
+		    printf "  git push origin --tags\n";
+   		    ;;
+	    esac
+	else
+	    git push origin ${MODULE_TAG_IN_BRANCH};
+	fi
     else
 	if [ "$found" -gt 1 ]; then
 	    die 1 "STRANGE : We've found the same tag in $found times. Please check, there is something wrong!"

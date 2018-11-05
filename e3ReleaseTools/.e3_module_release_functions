@@ -93,7 +93,6 @@ function yes_or_no_to_go
 {
 
     printf  ">>\n";
-    printf  "  Now you are entering the release e3 module...\n"
     printf  "  You should aware what you are doing now ....\n";
     printf  "  If you are not sure, please stop this procedure immediately\n";
 
@@ -112,6 +111,8 @@ function yes_or_no_to_go
     esac
 
 }
+
+
 
 
 function usage
