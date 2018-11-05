@@ -28,7 +28,7 @@ Therefore, MODULE version should be constant in the time domain and BASE and REQ
 
 # e3ModuleRelease.bash
 
-This script helps us to *do* release with the following release tag format:
+This script helps us to *do* create the ess customized version number for the following release tag format:
 
 ```
 BASE_VERSION-REQUIRE_VERSION/MODULE_VERSION-YYMMDD-HHMM
@@ -39,7 +39,7 @@ For example, the following tag is created with Base 7.0.1.1, require 3.0.2, its 
 ```
 7.0.1.1-3.0.2/2.7.14p-1810312223
 ```
-
+As you know, our tag is an annotated tag. So we can access an individual commit via git describe with a default option.
 
 ```
 $ e3ModuleRelease.bash

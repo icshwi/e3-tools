@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Monday, November  5 20:25:01 CET 2018
-#   version : 0.0.8
+#   date    : Monday, November  5 23:16:13 CET 2018
+#   version : 0.0.9
 #
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -35,6 +35,7 @@ declare -g  IsBase=""
 declare -g  VERSION_STRING=""
 declare -g  MODULE_BRANCH=""
 declare -g  MODULE_TAG_IN_BRANCH=""
+declare -g  HEAD_HASH_TAG=""
 declare -g  module_version=""
 declare -g  require_version=""
 declare -g  base_version=""
@@ -82,6 +83,9 @@ MODULE_TOP=${PWD}
 # Get all branches
 git fetch origin
 
+HEAD_HASH_TAG=$(git rev-parse --short HEAD)
+
+
 if [[ "$(basename ${MODULE_TOP})" =~ "e3-require" ]] ; then
     IsRequire="1";
 elif [[ "$(basename ${MODULE_TOP})" =~ "e3-base" ]] ; then
@@ -95,6 +99,7 @@ if ! git checkout ${BRANCH}; then
     echo -e >&2 "\n>>\n  Please check ${PWD}.\n  It might not be a git repository or we cannot find the branch ${BRANCH}.";
     exit 1
 fi
+
 
 ## STOP if any changes are exist in ${BRANCH}
 any_changes=$(git status --porcelain --untracked-files=no)
@@ -121,13 +126,7 @@ if ! [ -z "${IsBase}" ]; then
     if [[ $(checkIfFile "${CONFIG_BASE}") -eq "NON_EXIST" ]]; then
 	die 1 "ERROR : we cannot find the file >>${CONFIG_BASE}<<";
     else
-	base_version="$(read_file_get_string "${CONFIG_BASE}" "E3_BASE_VERSION:=")";
-	if [ -z "${base_version}" ]; then
-	    base_version="$(read_file_get_string  "${CONFIG_BASE}" "E3_BASE_VERSION=")";
-	    if [ -z "${base_version}" ]; then
-		die 1 "ERROR 2nd : we cannot read E3_BASE_VERSION properly, please check ${CONFIG_BASE}"
-	    fi
-	fi
+	base_version=$(read_version "${CONFIG_BASE}" "E3_BASE_VERSION")
     fi
     module_version=${base_version}
     require_version="NA"
@@ -141,32 +140,16 @@ else
     if [[ $(checkIfFile "${RELEASE_BASE}") -eq "NON_EXIST" ]]; then
 	die 1 "ERROR : we cannot find the file >>${RELEASE_BASE}<<";
     else
-	base_path="$(read_file_get_string  "${RELEASE_BASE}" "EPICS_BASE:=")";
-	
-	if [ -z "${base_path}" ]; then
-	    base_path="$(read_file_get_string  "${RELEASE_BASE}" "EPICS_BASE=")";
-	    if [ -z "${base_path}" ]; then
-		die 1 "ERROR 2nd : we cannot read EPICS_BASE properly, please check ${RELEASE_BASE}"
-	    fi
-	fi
-	# Remove all except base-N.N.N.N, and select after $base_prefix (base-)
-	# 
+	base_path=$(read_version "${RELEASE_BASE}" "EPICS_BASE")
 	base_version=$(basename ${base_path})
 	base_version=${base_version#${base_prefix}}
-
     fi
 
     # RELEASE_BASE : E3_REQUIRE_VERSION
     if [[ $(checkIfFile "${RELEASE_BASE}") -eq "NON_EXIST" ]]; then
 	die 1 "ERROR at ${FUNCNAME[*]} : we cannot find the file >>${RELEASE_BASE}<<";
     else
-	require_version="$(read_file_get_string "${RELEASE_BASE}" "E3_REQUIRE_VERSION:=")";
-	if [ -z "${require_version}" ]; then
-     	    require_version="$(read_file_get_string "${RELEASE_BASE}" "E3_REQUIRE_VERSION=")";
-	    if [ -z "${require_version}" ]; then
-     		die 1 "ERROR 2nd : we cannot read E3_REQUIRE_VERSION properly, please check ${RELEASE_BASE}"
-     	    fi
-	fi
+	require_version=$(read_version "${RELEASE_BASE}" "E3_REQUIRE_VERSION");
     fi
 
     # CONFIG_MODULE : E3_MODULE_VERSION
@@ -175,13 +158,7 @@ else
 	    printf "Maybe you are not in any module directory\n";
 	    die 1 "ERROR : we cannot find the file >>${CONFIG_MODULE}<<";
 	else
-	    module_version="$(read_file_get_string   "${CONFIG_MODULE}" "E3_MODULE_VERSION:=")";
-	    if [ -z "${module_version}" ]; then
-		module_version="$(read_file_get_string   "${CONFIG_MODULE}" "E3_MODULE_VERSION=")";
-		if [ -z "${module_version}" ]; then
-		    die 1 "ERROR 2nd : we cannot read E3_MODULE_VERSION properly, please check ${CONFIG_MODULE}"
-		fi
-	    fi
+	    module_version=$(read_version "${CONFIG_MODULE}" "E3_MODULE_VERSION");
 	fi
     else
 	# If a repository is e3-require, we use the require version as module version
@@ -206,11 +183,15 @@ printf "E3 REQUIRE VERSION : %34s\n" "${require_version}"
 ## $(basename $MODULE_TAG_IN_BRANCH) returns module-date
 ##
 
+
+
 MODULE_TAG_IN_BRANCH+=${base_version}
 MODULE_TAG_IN_BRANCH+="-"
 MODULE_TAG_IN_BRANCH+=${require_version}
 MODULE_TAG_IN_BRANCH+="/"
 MODULE_TAG_IN_BRANCH+=${module_version}
+MODULE_TAG_IN_BRANCH+="-"
+MODULE_TAG_IN_BRANCH+=${HEAD_HASH_TAG}
 MODULE_TAG_IN_BRANCH+="-"
 MODULE_TAG_IN_BRANCH+=${SC_LOGDATE}
 
@@ -288,8 +269,61 @@ if [[ "$BRANCH" =~ "master" ]] ; then
     else
 	printf ">>\n";
 	printf "  The branch %s is found remotely.\n" "${MODULE_BRANCH_NAME}"
-	printf "  So, we end here.\n"
-	printf ">>\n";
+	branch_hash_tag=$(git rev-parse --short ${MODULE_BRANCH_NAME})
+
+
+	if [ "$branch_hash_tag" = "${HEAD_HASH_TAG}" ]; then
+	    printf "  Master %s is the same as Branch %s %s\n" "${HEAD_HASH_TAG}" "${MODULE_BRANCH_NAME}" "$branch_hash_tag"
+	    printf "  So, we end here.\n"
+	    printf ">>\n";
+	else
+
+	    printf "  Master %s is not the same as Branch %s %s\n" "${HEAD_HASH_TAG}" "${MODULE_BRANCH_NAME}" "$branch_hash_tag"
+	    # file=$(mktemp -q) && {
+	    # 	git show ${MODULE_BRANCH_NAME}:configure/RELEASE > "$file"
+	    # 	branch_base_path=$(read_version "${file}" "EPICS_BASE")
+	    # 	branch_base_version=$(basename ${branch_base_path})
+	    # 	branch_base_version=${branch_base_version#${base_prefix}}
+	    # 	rm "$file"
+	    # }
+	    # file=$(mktemp -q) && {
+	    # 	git show ${MODULE_BRANCH_NAME}:configure/RELEASE > "$file"
+	    # 	branch_require_version=$(read_version "${file}" "E3_REQUIRE_VERSION")
+	    # 	rm "$file"
+	    # }
+	    
+	    git checkout master
+	    # We merge all changes into ${MODULE_BRANCH_NAME}, because the all files within master at this moment
+	    # are "release" one. It works both with three golden versions within e3.
+	    git merge -s ours ${MODULE_BRANCH_NAME}
+	    git checkout ${MODULE_BRANCH_NAME}
+	    git merge master
+	    git commit -m "merging ours from master to ${MODULE_BRANCH_NAME}";
+	    git tag -a $MODULE_TAG_IN_BRANCH -m "add $MODULE_TAG_IN_BRANCH"
+
+	    	printf ">>\n";
+		if [ "$ANSWER" == "NO" ]; then
+		    printf "  You can push these changes to the remote repository...\n"
+		    read -p "  Do you want to continue (y/N)? " answer
+		    case ${answer:0:1} in
+			y|Y )
+			    git push origin ${MODULE_BRANCH_NAME};
+			    git push origin ${MODULE_TAG_IN_BRANCH};
+			    ;;
+			* )
+			    printf ">>\n"
+			    printf "  One can push these changes later through \n"
+			    printf "  git push origin %s\n" "${MODULE_BRANCH_NAME}";
+			    printf "  git push origin %s\n" "${MODULE_TAG_IN_BRANCH}";
+   			    ;;
+		    esac
+		else
+		    git push origin ${MODULE_BRANCH_NAME};
+		    git push origin ${MODULE_TAG_IN_BRANCH};
+		fi
+		
+	    
+	fi
     fi
 else
     ### Check the existent tag in the $BRANCH

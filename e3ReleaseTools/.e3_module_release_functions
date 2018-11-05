@@ -139,3 +139,20 @@ function print_options
 }
 
 
+function read_version
+{
+    local version="";
+    local input_file=$1; shift;
+    local compare_string="$1"; shift;
+
+    #   echo "Input File     : ${input_file}"
+    #   echo "Compare String : ${compare_string}"
+    version="$(read_file_get_string "${input_file}" "${compare_string}:=")";
+    if [ -z "${version}" ]; then
+       	version="$(read_file_get_string "${input_file}" "${compare_string}=")";
+    	if [ -z "${version}" ]; then
+       	    version="error"
+       	fi
+    fi
+    echo "${version}"
+}
