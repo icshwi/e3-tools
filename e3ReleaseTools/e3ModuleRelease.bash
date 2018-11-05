@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Friday, November  2 16:06:25 CET 2018
-#   version : 0.0.7
+#   date    : Monday, November  5 20:25:01 CET 2018
+#   version : 0.0.8
 #
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -241,9 +241,11 @@ esac
 
 
 if [[ "$BRANCH" =~ "master" ]] ; then
+#    local_branch_exist=$(git branch | grep $MODULE_BRANCH_NAME)
+    
     ### Check whether a branch with the module version or not
-    branch_exist=$(git rev-parse --verify --quiet $MODULE_BRANCH_NAME)
-    if [ -z "${branch_exist}" ] ; then
+    remote_branch_exist=$(git branch -r |grep $MODULE_BRANCH_NAME)
+    if [ -z "${remote_branch_exist}" ] ; then
 	# There is no branch, so create it
 	# In this step, we don't have any conflict theoritically.
 	#
@@ -271,7 +273,7 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 		    printf ">>\n"
 		    printf "  One can push these changes later through \n"
 		    printf "  git push origin %s\n" "${MODULE_BRANCH_NAME}";
-		    printf "  git push origin --tags\n";
+		    printf "  git push origin %s\n" "${MODULE_TAG_IN_BRANCH}";
    		    ;;
 	    esac
 	else
@@ -285,7 +287,7 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 	
     else
 	printf ">>\n";
-	printf "  The branch %s exists.\n" "${MODULE_BRANCH_NAME}"
+	printf "  The branch %s is found remotely.\n" "${MODULE_BRANCH_NAME}"
 	printf "  So, we end here.\n"
 	printf ">>\n";
     fi
@@ -319,7 +321,7 @@ else
 		* )
 		    printf ">>\n"
 		    printf "  One can push these changes later through \n"
-		    printf "  git push origin --tags\n";
+		    printf "  git push origin %s\n" "${MODULE_TAG_IN_BRANCH}";
    		    ;;
 	    esac
 	else
