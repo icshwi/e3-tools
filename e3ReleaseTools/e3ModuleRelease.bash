@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Monday, November  5 23:16:13 CET 2018
-#   version : 0.0.9
+#   date    : Tuesday, November  6 17:51:01 CET 2018
+#   version : 0.0.10
 #
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -47,15 +47,24 @@ declare -ga tag_list=()
 . ${SC_TOP}/.e3_module_release_functions
 
 declare -g BRANCH=""
+declare -g TARGET_SRC=""
 
-options=":b:h:y"
+options=":b:s:h:y"
 ANSWER="NO"
 
 while getopts "${options}" opt; do
     case "${opt}" in
-        b) BRANCH=${OPTARG} ;;
-
-	y) ANSWER="YES" ;;
+        b)
+	    BRANCH=${OPTARG};
+	    TARGET_SRC=${BRANCH};
+	   ;;
+	s)
+	    BRANCH=${DEFAULT_BRANCH};
+	    TARGET_SRC=${OPTARG};
+	    ;;
+	y)
+	    ANSWER="YES";
+	   ;;
 	:)
 	    echo "Option -$OPTARG requires an argument." >&2
 	    exit 1
@@ -73,6 +82,7 @@ shift $((OPTIND-1))
 if [ -z "$BRANCH" ]; then
     #    printf ">> No BRANCH is defined, use the default one %s\n" "${DEFAULT_BRANCH}"
     BRANCH=${DEFAULT_BRANCH}
+    TARGET_SRC=${BRANCH}
 fi
 
 
@@ -83,8 +93,6 @@ MODULE_TOP=${PWD}
 # Get all branches
 git fetch origin
 
-HEAD_HASH_TAG=$(git rev-parse --short HEAD)
-
 
 if [[ "$(basename ${MODULE_TOP})" =~ "e3-require" ]] ; then
     IsRequire="1";
@@ -93,12 +101,18 @@ elif [[ "$(basename ${MODULE_TOP})" =~ "e3-base" ]] ; then
 fi
 
 
-## BE in ${BRANCH}
-## However, we stop here if ${BRANCH} doesn't exist (Yes, master is always there)
-if ! git checkout ${BRANCH}; then
+## BE in ${TARGET_SRC}
+## master, branch, or simulated master (any history log)
+## However, we stop here if ${TARGET_SRC} doesn't exist (Yes, master is always there)
+if ! git checkout ${TARGET_SRC}; then
     echo -e >&2 "\n>>\n  Please check ${PWD}.\n  It might not be a git repository or we cannot find the branch ${BRANCH}.";
     exit 1
 fi
+
+## git rev-parse HEAD will return "the current working branch or revision" hash information
+## So, we are under "git checkout ${TARGET_SRC}
+
+HEAD_HASH_TAG=$(git rev-parse --short HEAD)
 
 
 ## STOP if any changes are exist in ${BRANCH}
@@ -220,7 +234,6 @@ case "$1" in
 esac
 
 
-
 if [[ "$BRANCH" =~ "master" ]] ; then
 #    local_branch_exist=$(git branch | grep $MODULE_BRANCH_NAME)
     
@@ -233,6 +246,10 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 	printf ">>\n";
 	printf "  No Branch %s is found, creating ....\n" "${MODULE_BRANCH_NAME}"
 	printf "\n";
+
+	if [ "$ANSWER" == "NO" ]; then
+	    yes_or_no_to_go
+	fi
 	
 	git checkout -b ${MODULE_BRANCH_NAME}
 	git commit -m "adding ${MODULE_BRANCH_NAME}";
@@ -263,7 +280,7 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 	fi
 	
 	printf ">> \n"
-	git checkout ${BRANCH}
+	git checkout  ${TARGET_SRC}
 	printf "\n";
 	
     else
@@ -279,26 +296,26 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 	else
 
 	    printf "  Master %s is not the same as Branch %s %s\n" "${HEAD_HASH_TAG}" "${MODULE_BRANCH_NAME}" "$branch_hash_tag"
-	    # file=$(mktemp -q) && {
-	    # 	git show ${MODULE_BRANCH_NAME}:configure/RELEASE > "$file"
-	    # 	branch_base_path=$(read_version "${file}" "EPICS_BASE")
-	    # 	branch_base_version=$(basename ${branch_base_path})
-	    # 	branch_base_version=${branch_base_version#${base_prefix}}
-	    # 	rm "$file"
-	    # }
-	    # file=$(mktemp -q) && {
-	    # 	git show ${MODULE_BRANCH_NAME}:configure/RELEASE > "$file"
-	    # 	branch_require_version=$(read_version "${file}" "E3_REQUIRE_VERSION")
-	    # 	rm "$file"
-	    # }
+	    printf "  Now we are merging from %s to %s ....\n" "${TARGET_SRC}" "${MODULE_BRANCH_NAME}"
+
+	    if [ "$ANSWER" == "NO" ]; then
+		yes_or_no_to_go
+	    fi
 	    
-	    git checkout master
+	    git checkout ${TARGET_SRC}
 	    # We merge all changes into ${MODULE_BRANCH_NAME}, because the all files within master at this moment
 	    # are "release" one. It works both with three golden versions within e3.
 	    git merge -s ours ${MODULE_BRANCH_NAME}
 	    git checkout ${MODULE_BRANCH_NAME}
-	    git merge master
-	    git commit -m "merging ours from master to ${MODULE_BRANCH_NAME}";
+	    git merge ${TARGET_SRC}
+
+	    printf " Now you are committing and creating a tag ....\n";
+	    if [ "$ANSWER" == "NO" ]; then
+		yes_or_no_to_go
+	    fi
+	    
+	    git commit -m "merging ours from ${TARGET_SRC} to ${MODULE_BRANCH_NAME}";
+	    
 	    git tag -a $MODULE_TAG_IN_BRANCH -m "add $MODULE_TAG_IN_BRANCH"
 
 	    	printf ">>\n";
@@ -372,3 +389,18 @@ else
 fi # [[ "$BRANCH" =~ "master" ]] ; then
 
 exit
+
+
+	    # file=$(mktemp -q) && {
+	    # 	git show ${MODULE_BRANCH_NAME}:configure/RELEASE > "$file"
+	    # 	branch_base_path=$(read_version "${file}" "EPICS_BASE")
+	    # 	branch_base_version=$(basename ${branch_base_path})
+	    # 	branch_base_version=${branch_base_version#${base_prefix}}
+	    # 	rm "$file"
+	    # }
+	    # file=$(mktemp -q) && {
+	    # 	git show ${MODULE_BRANCH_NAME}:configure/RELEASE > "$file"
+	    # 	branch_require_version=$(read_version "${file}" "E3_REQUIRE_VERSION")
+	    # 	rm "$file"
+	    # }
+	    

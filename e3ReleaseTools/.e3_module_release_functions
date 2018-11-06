@@ -94,7 +94,7 @@ function yes_or_no_to_go
 
     printf  ">>\n";
     printf  "  You should aware what you are doing now ....\n";
-    printf  "  If you are not sure, please stop this procedure immediately\n";
+    printf  "  If you are not sure, please stop this procedure immediately!\n";
 
 #    print_options
     
@@ -134,6 +134,7 @@ function print_options
     printf ">>\n"
     printf "  We've found your working environment as follows:\n";
     printf "  Working Branch      : %s\n" "${BRANCH}"
+    printf "  Working TARGET_SRC  : %s\n" "${TARGET_SRC}"
     printf "  Working PATH        : %s\n" "${PWD}"
     printf ">>\n\n"
 }
