@@ -1,6 +1,12 @@
-E3 Module Template Builder
+E3 Module / Application Template Builder
 ====
 
+# Please use Release 0.0.1
+
+https://github.com/icshwi/e3-tools/releases/tag/0.0.1
+
+
+*** WIP ***
 
 # Local Module Source
 One would like to hold all source files and e3 module configuration files in e3-*

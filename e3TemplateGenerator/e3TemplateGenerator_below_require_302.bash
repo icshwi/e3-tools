@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Wednesday, November  7 22:42:16 CET 2018
-#   version : 0.6.0
+#   date    : Thursday, September 20 12:49:37 CEST 2018
+#   version : 0.5.0
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -32,11 +32,20 @@ declare -gr SC_HASH="$(git rev-parse --short HEAD)"
 declare -g  LOG=".MODULE_LOG"
 
 declare -g  E3_MODULE_DEST=""
+##
+## The following GLOBAL variables should be updated according to
+## main release. However, it can be changed after their creation also.
+## 
+## _VARIABLES are used in .create_e3_mod_functions.cfg
+##
+## Please see add_configure, add_readme, and so on
+## 
+
 
 declare -gr _E3_EPICS_PATH=/epics
 declare -gr _E3_BASE_VERSION=3.15.5
 declare -gr _E3_REQUIRE_NAME=require
-declare -gr _E3_REQUIRE_VERSION=3.0.3
+declare -gr _E3_REQUIRE_VERSION=3.0.0
 declare -gr _EPICS_BASE=${_E3_EPICS_PATH}/base-${_E3_BASE_VERSION}
 
 declare -g  _EPICS_MODULE_NAME=""
@@ -46,14 +55,14 @@ declare -g  _E3_TGT_URL_FULL=""
 declare -g  _E3_MODULE_GITURL_FULL=""
 
 
-. ${SC_TOP}/.e3_template_funcs.cfg
+. ${SC_TOP}/.create_e3_mod_functions.cfg
+
 
 
 targetpath=""
 remotesrc=""
 localsrc=""
-siteApps=""
-siteMods=""
+
 
 function usage
 {
@@ -66,8 +75,8 @@ function usage
 	echo "";
 	echo "Examples in modules_conf  : ";
 	echo "";
-	echo " bash $0 -m  snmp3.conf"
-	echo " bash $0 -m  snmp3.conf -d ~/testing"
+	echo " bash create_e3_modules.bash -m  snmp3.conf"
+	echo " bash create_e3_modules.bash -m  snmp3.conf -d ~/testing"
 	echo ""
 	
     } 1>&2;
@@ -117,10 +126,6 @@ function module_info
     printf "e3 target url full : %${length}s\n" "${_E3_TGT_URL_FULL}"
     printf ">> \n";
 
-    if ! [ -z "${siteMods}" ]; then
-	printf "e3 module is located in siteMods\n" 
-    fi
-    
     
 }
 
@@ -158,24 +163,16 @@ fi
 if [[ $(checkIfFile "${MODULE_CONF}") -eq "NON_EXIST" ]]; then
     die 1 "ERROR at ${FUNCNAME[*]} : we cannot find the input file >>${release_file}<<";
 else
-    _EPICS_MODULE_NAME="$(read_version "${MODULE_CONF}" "EPICS_MODULE_NAME")";
-    _E3_MODULE_SRC_PATH="$(read_version "${MODULE_CONF}" "E3_MODULE_SRC_PATH")";
-    e3_target_url="$(read_version "${MODULE_CONF}" "E3_TARGET_URL")";
-    epics_mod_url="$(read_version "${MODULE_CONF}" "EPICS_MODULE_URL")";
-    site_mod_status="$(read_version "${MODULE_CONF}" "E3_SITEMODS")";
-    
+    _EPICS_MODULE_NAME="$(read_file_get_string   "${MODULE_CONF}" "EPICS_MODULE_NAME:=")";
+    _E3_MODULE_SRC_PATH="$(read_file_get_string  "${MODULE_CONF}" "E3_MODULE_SRC_PATH:=")";
+    e3_target_url="$(read_file_get_string        "${MODULE_CONF}" "E3_TARGET_URL:=")";
+    epics_mod_url="$(read_file_get_string        "${MODULE_CONF}" "EPICS_MODULE_URL:=")";
     if [ -z "${epics_mod_url}" ] ; then
 	localsrc="1";
     else
 	remotesrc="1";
     fi
 
-    if [ -z "${site_mod_status}" ] ; then
-	siteApps="1";
-    else
-	siteMods="1";
-    fi
-    
     if [ -z "${_EPICS_MODULE_NAME}" ] ; then
 	echo "EPICS_MODULE_NAME is not defined";
 	exit;
@@ -203,7 +200,7 @@ module_info;
 
 
 rm -rf ${E3_MODULE_DEST} ||  die 1 "We cannot remove directories ${E3_MODULE_DEST} : Please check it" ;
-mkdir -p ${E3_MODULE_DEST}/{configure/module,patch/Site,docs,cmds,template,opi}  ||  die 1 "We cannot create directories : Please check it" ;
+mkdir -p ${E3_MODULE_DEST}/{configure/E3,patch/Site,docs,cmds,template,opi}  ||  die 1 "We cannot create directories : Please check it" ;
 
 
 
@@ -231,16 +228,15 @@ pushd ${E3_MODULE_DEST}
 
 git init ||  die 1 "We cannot git init in ${_E3_MOD_NAME} : Please check it" ;
 
+
 if ! [ -z "${localsrc}" ]; then
     _E3_MODULE_SRC_PATH+="-loc";
     echo ${_E3_MODULE_SRC_PATH}
     mkdir -p ${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/{Db,src} ||  die 1 "We cannot create directories : Please check it" ;
-
-    if [[ "${_EPICS_MODULE_NAME}" =~ "example" ]]; then 
-	addExampleSrc  "${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/src" 
-	addExampleDb   "${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/Db" 
-	addExampleCmds "cmds"
-    fi
+    
+    addExampleSrc  "${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/src" 
+    addExampleDb   "${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/Db" 
+    addExampleCmds "cmds"
 else
     add_submodule "${_E3_MODULE_GITURL_FULL}" "${_E3_MODULE_SRC_PATH}" ||  die 1 "We cannot add ${_E3_MODULE_GITURL_FULL} as git submodule ${_E3_MOD_NAME} : Please check it" ;
 fi
@@ -248,13 +244,8 @@ fi
 ## add the default .gitignore
 add_gitignore
 
-
 ## add README.md
-if ! [ -z "${siteMods}" ]; then
-    add_readme_siteMods
-else
-    add_readme_siteApps;
-fi
+add_readme
 
 ## add Makefile for E3 front-end
 add_e3_makefile
@@ -276,16 +267,12 @@ popd             # Back to ${m_name}
 
 
 pushd configure  # Enter in configure
-if ! [ -z "${siteMods}" ]; then
-    add_configure_siteMods
-else
-    add_configure_siteApps;
-fi
+add_configure 
 popd             # Back to ${m_name}
 
 
-pushd configure/module # Enter in configure/E3
-add_configure_module
+pushd configure/E3 # Enter in configure/E3
+add_configure_e3
 popd               # Back in ${m_name}
 
 
