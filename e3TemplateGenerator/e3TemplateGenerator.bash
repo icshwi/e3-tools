@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Wednesday, November  7 22:42:16 CET 2018
-#   version : 0.6.0
+#   date    : Thursday, November  8 17:54:59 CET 2018
+#   version : 0.6.1
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -30,6 +30,7 @@ declare -gr SC_USER="$(whoami)"
 declare -gr SC_HASH="$(git rev-parse --short HEAD)"
 
 declare -g  LOG=".MODULE_LOG"
+declare -g  UPDATE_LOG=".UPDATE_MODULE_LOG";
 
 declare -g  E3_MODULE_DEST=""
 
@@ -54,15 +55,18 @@ remotesrc=""
 localsrc=""
 siteApps=""
 siteMods=""
+updateSource=""
 
 function usage
 {
     {
 	echo "";
-	echo "Usage    : $0 [-m <module_configuraton_file>] [-d <module_destination_path>] " ;
+	echo "Usage    : $0 [-m <module_configuraton_file>] [-d <module_destination_path>] [-u <existent_module_path>] " ;
 	echo "";
-	echo "               -m : mandatory"
-	echo "               -d : option ( \$PWD if not ) "
+	echo "               -m : a module configuration file, please check ${SC_TOP}/modules_conf path"
+	echo "               -d : a destination, optional, Default \$PWD : ${SC_TOP} "
+	echo "               -u : an existent module path for updating configuration files";
+	echo "               -t : an existent module path for updating configuration files";
 	echo "";
 	echo "Examples in modules_conf  : ";
 	echo "";
@@ -124,7 +128,8 @@ function module_info
     
 }
 
-options=":m:d:"
+options=":m:u:d:y"
+SITEMODS="NO"
 
 while getopts "${options}" opt; do
     case "${opt}" in
@@ -134,6 +139,13 @@ while getopts "${options}" opt; do
 	d)
 	    targetpath="1";
 	    E3_MODULE_PATH=${OPTARG};
+	    ;;
+	u)
+	    updateSource="1";
+	    EXIST_SRC_PATH=${OPTARG};
+	    ;;
+	y)
+	    SITEMODS="YES";
 	    ;;
 	*)
 	    usage
@@ -148,188 +160,405 @@ if [ -z "${targetpath}" ]; then
 fi
 
 
-# REMOTE SRC or LOCAL SRC
-# The configuration file should contain the following two entries:
-#
-# EPICS_MODULE_NAME:=
-# E3_MODULE_SRC_PATH:=
-# E3_TARGET_URL:=
+if [ -z "${updateSource}" ]; then
+    # REMOTE SRC or LOCAL SRC
+    # The configuration file should contain the following two entries:
+    #
+    # EPICS_MODULE_NAME:=
+    # E3_MODULE_SRC_PATH:=
+    # E3_TARGET_URL:=
 
-if [[ $(checkIfFile "${MODULE_CONF}") -eq "NON_EXIST" ]]; then
-    die 1 "ERROR at ${FUNCNAME[*]} : we cannot find the input file >>${release_file}<<";
-else
-    _EPICS_MODULE_NAME="$(read_version "${MODULE_CONF}" "EPICS_MODULE_NAME")";
-    _E3_MODULE_SRC_PATH="$(read_version "${MODULE_CONF}" "E3_MODULE_SRC_PATH")";
-    e3_target_url="$(read_version "${MODULE_CONF}" "E3_TARGET_URL")";
-    epics_mod_url="$(read_version "${MODULE_CONF}" "EPICS_MODULE_URL")";
-    site_mod_status="$(read_version "${MODULE_CONF}" "E3_SITEMODS")";
-    
-    if [ -z "${epics_mod_url}" ] ; then
-	localsrc="1";
+    if [[ $(checkIfFile "${MODULE_CONF}") -eq "NON_EXIST" ]]; then
+	usage
     else
-	remotesrc="1";
+	_EPICS_MODULE_NAME="$(read_version "${MODULE_CONF}" "EPICS_MODULE_NAME")";
+	_E3_MODULE_SRC_PATH="$(read_version "${MODULE_CONF}" "E3_MODULE_SRC_PATH")";
+	e3_target_url="$(read_version "${MODULE_CONF}" "E3_TARGET_URL")";
+	epics_mod_url="$(read_version "${MODULE_CONF}" "EPICS_MODULE_URL")";
+#	site_mod_status="$(read_version "${MODULE_CONF}" "E3_SITEMODS")";
+	
+	if [ -z "${epics_mod_url}" ] ; then
+	    localsrc="1";
+	else
+	    remotesrc="1";
+	fi
+
+	if [ "$SITEMODS" == "NO" ]; then
+	    siteApps="1";
+	else
+	    siteMods="1";
+	fi
+	
+	if [ -z "${_EPICS_MODULE_NAME}" ] ; then
+	    echo "EPICS_MODULE_NAME is not defined";
+	    exit;
+	fi
+	if [ -z "${_E3_MODULE_SRC_PATH}" ] ; then
+	    echo "E3_MODULE_SRC_PATH is not defined";
+	    exit;
+	fi
+	
     fi
 
-    if [ -z "${site_mod_status}" ] ; then
-	siteApps="1";
-    else
-	siteMods="1";
+    _E3_MOD_NAME=e3-${_EPICS_MODULE_NAME}
+
+    if ! [ -z "${remotesrc}" ]; then
+	_E3_MODULE_GITURL_FULL=${epics_mod_url}/${_E3_MODULE_SRC_PATH}
     fi
-    
-    if [ -z "${_EPICS_MODULE_NAME}" ] ; then
-	echo "EPICS_MODULE_NAME is not defined";
-	exit;
-    fi
-    if [ -z "${_E3_MODULE_SRC_PATH}" ] ; then
-	echo "E3_MODULE_SRC_PATH is not defined";
-	exit;
-    fi
-    
-fi
 
-_E3_MOD_NAME=e3-${_EPICS_MODULE_NAME}
-
-if ! [ -z "${remotesrc}" ]; then
-     _E3_MODULE_GITURL_FULL=${epics_mod_url}/${_E3_MODULE_SRC_PATH}
-fi
-
-_E3_TGT_URL_FULL=${e3_target_url}/${_E3_MOD_NAME}
+    _E3_TGT_URL_FULL=${e3_target_url}/${_E3_MOD_NAME}
 
 
-E3_MODULE_DEST=${E3_MODULE_PATH}/${_E3_MOD_NAME};
+    E3_MODULE_DEST=${E3_MODULE_PATH}/${_E3_MOD_NAME};
 
 
-module_info;
-
-
-rm -rf ${E3_MODULE_DEST} ||  die 1 "We cannot remove directories ${E3_MODULE_DEST} : Please check it" ;
-mkdir -p ${E3_MODULE_DEST}/{configure/module,patch/Site,docs,cmds,template,opi}  ||  die 1 "We cannot create directories : Please check it" ;
-
-
-
-## Copy its original Module configuration file in docs
-cp ${MODULE_CONF} ${E3_MODULE_DEST}/docs/   ||  die 1 "We cannot copy ${MODULE_CONF} to ${E3_MODULE_DEST}/docs : Please check it" ;
-
-
-touch ${LOG}
-{
-    printf ">>\n";
-    printf "Script is used     : ${SC_SCRIPTNAME}\n";
-    printf "Script Path        : ${SC_TOP}\n";
-    printf "User               : ${SC_USER}\n";
-    printf "Log Time           : ${SC_LOGDATE}\n";
-    printf "e3 repo Hash       : ${SC_HASH}\n";
-    
     module_info;
-    
-} >> ${E3_MODULE_DEST}/docs/${LOG}
+
+
+    rm -rf ${E3_MODULE_DEST} ||  die 1 "We cannot remove directories ${E3_MODULE_DEST} : Please check it" ;
+    mkdir -p ${E3_MODULE_DEST}/{configure/module,patch/Site,docs,cmds,template,opi}  ||  die 1 "We cannot create directories : Please check it" ;
 
 
 
-## Going into ${E3_MODULE_DEST}
-pushd ${E3_MODULE_DEST}
+    ## Copy its original Module configuration file in docs
+    cp ${MODULE_CONF} ${E3_MODULE_DEST}/docs/   ||  die 1 "We cannot copy ${MODULE_CONF} to ${E3_MODULE_DEST}/docs : Please check it" ;
 
-git init ||  die 1 "We cannot git init in ${_E3_MOD_NAME} : Please check it" ;
 
-if ! [ -z "${localsrc}" ]; then
-    _E3_MODULE_SRC_PATH+="-loc";
-    echo ${_E3_MODULE_SRC_PATH}
-    mkdir -p ${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/{Db,src} ||  die 1 "We cannot create directories : Please check it" ;
+    touch ${LOG}
+    {
+	printf ">>\n";
+	printf "Script is used     : ${SC_SCRIPTNAME}\n";
+	printf "Script Path        : ${SC_TOP}\n";
+	printf "User               : ${SC_USER}\n";
+	printf "Log Time           : ${SC_LOGDATE}\n";
+	printf "e3 repo Hash       : ${SC_HASH}\n";
+	
+	module_info;
+	
+    } >> ${E3_MODULE_DEST}/docs/${LOG}
 
-    if [[ "${_EPICS_MODULE_NAME}" =~ "example" ]]; then 
-	addExampleSrc  "${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/src" 
-	addExampleDb   "${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/Db" 
-	addExampleCmds "cmds"
+
+
+    ## Going into ${E3_MODULE_DEST}
+    pushd ${E3_MODULE_DEST}
+
+    git init ||  die 1 "We cannot git init in ${_E3_MOD_NAME} : Please check it" ;
+
+    if ! [ -z "${localsrc}" ]; then
+	_E3_MODULE_SRC_PATH+="-loc";
+	echo ${_E3_MODULE_SRC_PATH}
+	mkdir -p ${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/{Db,src} ||  die 1 "We cannot create directories : Please check it" ;
+
+	if [[ "${_EPICS_MODULE_NAME}" =~ "example" ]]; then 
+	    addExampleSrc  "${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/src" 
+	    addExampleDb   "${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/Db" 
+	    addExampleCmds "cmds"
+	fi
+    else
+	add_submodule "${_E3_MODULE_GITURL_FULL}" "${_E3_MODULE_SRC_PATH}" ||  die 1 "We cannot add ${_E3_MODULE_GITURL_FULL} as git submodule ${_E3_MOD_NAME} : Please check it" ;
     fi
+
+    ## add the default .gitignore
+    add_gitignore
+
+
+    ## add README.md
+    if [ "$SITEMODS" == "YES" ]; then
+	add_readme_siteMods
+    else
+	add_readme_siteApps;
+    fi
+
+    ## add Makefile for E3 front-end
+    add_e3_makefile
+
+    ## add ${_E3_MOD_NAME}.Makefile for E3
+    ## This is the template file. One should change it accroding to their
+    ## corresponding module
+    if ! [ -z "${localsrc}" ]; then
+	add_local_module_makefile "${_EPICS_MODULE_NAME}"
+    else
+	add_module_makefile  "${_EPICS_MODULE_NAME}"
+    fi
+
+
+    pushd patch/Site # Enter in patch/Site
+    ## add patch path and readme and so on
+    add_patch
+    popd             # Back from patch/Site
+
+
+    pushd configure  # Enter in configure
+    if [ "$SITEMODS" == "YES" ]; then
+	add_configure_siteMods
+    else
+	add_configure_siteApps;
+    fi
+    popd             # Back from configure
+
+
+    pushd configure/module # Enter in configure/E3
+    add_configure_module
+    popd               # Back from configure/E3
+
+
+    # # git init
+    git add .
+
+
+    printf "\n";
+    printf  ">>>> Do you want to add the URL ${_E3_TGT_URL_FULL} for the remote repository?\n";
+    printf  "     In that mean, you already create an empty repository at ${_E3_TGT_URL_FULL}.\n";
+    printf  "\n";
+    read -p "     If yes, the script will push the local ${_E3_MOD_NAME} to the remote repository. (y/N)? " answer
+    case ${answer:0:1} in
+	y|Y|yes|Yes|YES )
+	    printf ">>>> We are going to the further process ...... ";
+	    git remote add origin ${_E3_TGT_URL_FULL} ||  die 1 "Cannot add ${_E3_TGT_URL_FULL} in origin: Please check your git env!" ;
+	    git commit -m "Init..${_E3_MOD_NAME}"     ||  die 1 "We cannot commit, maybe you need to run git config user and so on." ;
+	    git push -u origin master                 ||  die 1 "Repository is not at ${_E3_TGT_URL_FULL} : Please create it first!" ;
+	    
+	    ;;
+	* )
+	    help;
+	    ;;
+    esac
+
+
+    ## Going out from ${E3_MODULE_DEST}
+    popd
+
+
+    echo "";
+    echo "The following files should be modified according to the module : "
+    echo "";
+    echo "   * ${E3_MODULE_DEST}/configure/CONFIG_MODULE"
+    echo "   * ${E3_MODULE_DEST}/configure/RELEASE"
+    echo "";
+    echo "One can check the e3- template works via ";
+    echo "   cd ${E3_MODULE_DEST}"
+    echo "   make init"
+    echo "   make vars"
+    echo "";
+    echo "";
+
 else
-    add_submodule "${_E3_MODULE_GITURL_FULL}" "${_E3_MODULE_SRC_PATH}" ||  die 1 "We cannot add ${_E3_MODULE_GITURL_FULL} as git submodule ${_E3_MOD_NAME} : Please check it" ;
-fi
-
-## add the default .gitignore
-add_gitignore
 
 
-## add README.md
-if ! [ -z "${siteMods}" ]; then
-    add_readme_siteMods
-else
-    add_readme_siteApps;
-fi
+    UPDATE_TOP=${SC_TOP}/${EXIST_SRC_PATH}
+    
+    pushd ${UPDATE_TOP}
+    # Get all branches
+ #   git fetch origin
 
-## add Makefile for E3 front-end
-add_e3_makefile
+    BRANCH="master";
 
-## add ${_E3_MOD_NAME}.Makefile for E3
-## This is the template file. One should change it accroding to their
-## corresponding module
-if ! [ -z "${localsrc}" ]; then
-    add_local_module_makefile "${_EPICS_MODULE_NAME}"
-else
-    add_module_makefile  "${_EPICS_MODULE_NAME}"
-fi
+    if ! git checkout ${BRANCH}; then
+    echo -e >&2 "\n>>\n  Please check ${PWD}.\n  It might not be a git repository or we cannot find the branch ${BRANCH}.";
+    exit 1
+    fi
+    
+    # ## STOP if any changes are exist in ${BRANCH}
+    # any_changes=$(git status --porcelain --untracked-files=no)
+    
+    # if ! [ -z "${any_changes}" ] ; then
+    # 	die "ERROR : the ${BRANCH} branch was changed, please commit them first."
+    # fi
 
+    # The following directory will be created if there is no directory. The existent files are intact. 
+    declare -ga directory_list=("docs" "cmds" "template" "opi" "iocsh");
 
-pushd patch/Site # Enter in patch/Site
-## add patch path and readme and so on
-add_patch
-popd             # Back to ${m_name}
+    for a_dir in ${directory_list[@]}; do
+	if [[ $(checkIfDir "${a_dir}") -eq "$NON_EXIST" ]]; then
+	    mkdir -p ${a_dir}  ||  die 1 "We cannot create directories : Please check it" ;
+	fi
+    done
+    
+    {
+	printf "\n>>\n";
+	printf "Update Log Time    : ${SC_LOGDATE}\n";
+	printf ">>\n";
+	printf "Script is used     : ${SC_SCRIPTNAME}\n";
+	printf "Script Path        : ${SC_TOP}\n";
+	printf "User               : ${SC_USER}\n";
+	printf "e3 repo Hash       : ${SC_HASH}\n";
 
-
-pushd configure  # Enter in configure
-if ! [ -z "${siteMods}" ]; then
-    add_configure_siteMods
-else
-    add_configure_siteApps;
-fi
-popd             # Back to ${m_name}
-
-
-pushd configure/module # Enter in configure/E3
-add_configure_module
-popd               # Back in ${m_name}
-
-
-# # git init
-git add .
-
-
-printf "\n";
-printf  ">>>> Do you want to add the URL ${_E3_TGT_URL_FULL} for the remote repository?\n";
-printf  "     In that mean, you already create an empty repository at ${_E3_TGT_URL_FULL}.\n";
-printf  "\n";
-read -p "     If yes, the script will push the local ${_E3_MOD_NAME} to the remote repository. (y/N)? " answer
-case ${answer:0:1} in
-    y|Y|yes|Yes|YES )
-	printf ">>>> We are going to the further process ...... ";
-	git remote add origin ${_E3_TGT_URL_FULL} ||  die 1 "Cannot add ${_E3_TGT_URL_FULL} in origin: Please check your git env!" ;
-	git commit -m "Init..${_E3_MOD_NAME}"     ||  die 1 "We cannot commit, maybe you need to run git config user and so on." ;
-	git push -u origin master                 ||  die 1 "Repository is not at ${_E3_TGT_URL_FULL} : Please create it first!" ;
+	CONFIG_MODULE=${UPDATE_TOP}/configure/CONFIG_MODULE
+	RELEASE_BASE=${UPDATE_TOP}/configure/RELEASE
 	
-	;;
-    * )
-	help;
-	;;
-esac
+	# RELEASE_BASE : EPICS_BASE
+	if [[ $(checkIfFile "${RELEASE_BASE}") -eq "NON_EXIST" ]]; then
+	    die 1 "ERROR : we cannot find the file >>${RELEASE_BASE}<<";
+	else
+	    base_path=$(read_version "${RELEASE_BASE}" "EPICS_BASE")
+	    base_version=$(basename ${base_path})
+	    base_version=${base_version#${base_prefix}}
+	fi
+	
+	# RELEASE_BASE : E3_REQUIRE_VERSION
+	if [[ $(checkIfFile "${RELEASE_BASE}") -eq "NON_EXIST" ]]; then
+	    die 1 "ERROR at ${FUNCNAME[*]} : we cannot find the file >>${RELEASE_BASE}<<";
+	else
+	    require_version=$(read_version "${RELEASE_BASE}" "E3_REQUIRE_VERSION");
+	fi
+	
+	# CONFIG_MODULE : E3_MODULE_VERSION
+	if [ -z "${IsRequire}" ]; then
+	    if [[ $(checkIfFile "${CONFIG_MODULE}") -eq "NON_EXIST" ]]; then
+		printf "Maybe you are not in any module directory\n";
+		die 1 "ERROR : we cannot find the file >>${CONFIG_MODULE}<<";
+	    else
+		module_version=$(read_version "${CONFIG_MODULE}" "E3_MODULE_VERSION");
+	    fi
+	else
+	    # If a repository is e3-require, we use the require version as module version
+	    #
+	    module_version=${require_version}
+	fi
+	printf "\n"
+	printf "E3 MODULE VERSION  : %34s\n" "${module_version}"
+	printf "EPICS BASE VERSION : %34s\n" "${base_version}"
+	printf "E3 REQUIRE VERSION : %34s\n" "${require_version}"
+	printf ">>\n";
+	
+    } >> docs/${UPDATE_LOG}
 
 
-## Going out from ${E3_MODULE_DEST}
-popd
 
+    echo ${PWD}
+#"configure" "configure/module" 
 
-echo "";
-echo "The following files should be modified according to the module : "
-echo "";
-echo "   * ${E3_MODULE_DEST}/configure/CONFIG_MODULE"
-echo "   * ${E3_MODULE_DEST}/configure/RELEASE"
-echo "";
-echo "One can check the e3- template works via ";
-echo "   cd ${E3_MODULE_DEST}"
-echo "   make init"
-echo "   make vars"
-echo "";
-echo "";
+    WORKING_PATH="patch/Site"
+    printf ">>\n"
+    printf "  Check %s .......\n" "${WORKING_PATH}"
+    if [[ $(checkIfDir "${WORKING_PATH}") -eq "$NON_EXIST" ]]; then
+	printf "  Creating path ....\n";
+	mkdir -p ${WORKING_PATH}  ||  die 1 "We cannot create directories : Please check it" ;
+	pushd ${WORKING_PATH}
+	#	patchfile_count=$(ls *.patch 2>/dev/null | wc -l)
+	printf "  Add the default patch README, and HISTORY files\n";
+	add_patch
+	popd
+    else
+	printf "  Path exist %s\n" "${WORKING_PATH}"
+	printf "  Skip it\n";
+    fi
+
+    WORKING_PATH="configure/E3"
+    printf ">>\n"
+    printf "  Check %s .......\n" "${WORKING_PATH}"
+    if [[ $(checkIfDir "${WORKING_PATH}") -eq "$EXIST" ]]; then
+	printf "  Not Removing path ....\n";
+	printf "  One should check their changes with configure/module carefully\n";
+    # 	rm -rf ${WORKING_PATH}  ||  die 1 "We cannot create directories : Please check it" ;
+
+    fi
+
+    WORKING_PATH="configure/module"
+    printf ">>\n"
+    printf "  Check %s .......\n" "${WORKING_PATH}"
+    if [[ $(checkIfDir "${WORKING_PATH}") -eq "$NON_EXIST" ]]; then
+	printf "  Creating path ....\n";
+	mkdir -p ${WORKING_PATH}  ||  die 1 "We cannot create directories : Please check it" ;
+	pushd ${WORKING_PATH}
+	printf "  Add the default configure/module files....\n";
+	add_configure_module
+	popd
+    else
+	printf "  Working path %s exists\n" "${WORKING_PATH}"      ;
+	printf "  Do you want to update all files up-to-date?\n" ;
+	yes_or_no_to_go
+	pushd ${WORKING_PATH}
+	printf "  Add the default configure/module files....\n";
+	add_configure_module
+	popd
+    fi
+
+    
+        
+    WORKING_PATH="configure"
+    printf ">>\n"
+    printf "  Check %s .......\n" "${WORKING_PATH}"
+    if [[ $(checkIfDir "${WORKING_PATH}") -eq "$NON_EXIST" ]]; then
+	printf "  Creating path ....\n";
+	mkdir -p ${WORKING_PATH}  ||  die 1 "We cannot create directories : Please check it" ;
+	pushd ${WORKING_PATH}
+	if [ "$SITEMODS" == "YES" ]; then
+	    add_configure_siteMods
+	else
+	    add_configure_siteApps
+	fi
+	popd
+    else
+	echo "$WORKING_PATH is exist"
+	pushd ${WORKING_PATH}
 
 	
+	if [[ $(checkIfFile "DECOUPLE_FLAGS") -eq "$EXIST" ]]; then
+	    rm -f DECOUPLE_FLAGS
+	fi
+
+#	read_config_module CONFIG_MODULE  
+#	read_config_module CONFIG_MODULE_DEV
+	
+	if [ "$SITEMODS" == "YES" ]; then
+	    printf "   SITEMODS  \n";
+	    # CONFIG should be updated
+	    add_CONFIG_siteMods;
+	    # RELEASE should be updated according to existent VERSION info
+	    add_RELEASE_Update "${base_path}" "${require_version}";
+	    # CONFIG_MODULE
+	    file=$(mktemp -q) && {
+		read_config_module "CONFIG_MODULE" > "$file"
+		scp "$file" "CONFIG_MODULE"
+		rm "$file"
+	    }
+	    file=$(mktemp -q) && {
+		read_config_module "CONFIG_MODULE_DEV" > "$file"
+		scp "$file" "CONFIG_MODULE_DEV"
+		rm "$file"
+	    }
+	    # RULES should be updated 
+	    add_RULES_siteMods;
+	    # CONFIG_OPTIONS
+	    if [[ $(checkIfFile "CONFIG_OPTIONS") -eq "$NON_EXIST" ]]; then
+		add_CONFIG_OPTIONS;
+	    else
+		printf "  We've found CONFIG_OPTIONS. Skip it\n";
+	    fi
+	else
+	    printf "   SITEAPPS  \n";
+	    # CONFIG should be updated
+	    add_CONFIG_siteApps;
+	    # RELEASE should be updated according to existent VERSION info
+	    add_RELEASE_Update "${base_path}" "${require_version}";
+	    # CONFIG_MODULE
+	    # CONFIG_MODULE
+	    file=$(mktemp -q) && {
+		read_config_module "CONFIG_MODULE" > "$file"
+		scp "$file" "CONFIG_MODULE"
+		rm "$file"
+	    }
+	    file=$(mktemp -q) && {
+		read_config_module "CONFIG_MODULE_DEV" > "$file"
+		scp "$file" "CONFIG_MODULE_DEV"
+		rm "$file"
+	    }
+	    
+	    # RULES should be updated
+	    add_RULES_siteApps;
+	     # CONFIG_OPTIONS
+	    if [[ $(checkIfFile "CONFIG_OPTIONS") -eq "$NON_EXIST" ]]; then
+		add_CONFIG_OPTIONS;
+	    else
+		printf "  We've found CONFIG_OPTIONS. Skip it\n";
+	    fi
+	fi
+	popd
+    fi
+    
+    popd # back from ${UPDATE_TOP}
+fi
 
 exit
 
