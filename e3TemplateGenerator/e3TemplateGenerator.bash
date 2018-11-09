@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Thursday, November  8 17:54:59 CET 2018
-#   version : 0.6.1
+#   date    : Friday, November  9 15:33:12 CET 2018
+#   version : 0.6.2
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -37,7 +37,7 @@ declare -g  E3_MODULE_DEST=""
 declare -gr _E3_EPICS_PATH=/epics
 declare -gr _E3_BASE_VERSION=3.15.5
 declare -gr _E3_REQUIRE_NAME=require
-declare -gr _E3_REQUIRE_VERSION=3.0.3
+declare -gr _E3_REQUIRE_VERSION=3.0.4
 declare -gr _EPICS_BASE=${_E3_EPICS_PATH}/base-${_E3_BASE_VERSION}
 
 declare -g  _EPICS_MODULE_NAME=""
@@ -77,6 +77,21 @@ function usage
     } 1>&2;
     exit 1; 
 }
+
+
+function warning_path
+{
+    local path="$1"; shift;
+    {
+	printf ">>\n";
+	printf "  One should not run $0 with %s.\n" "$path"
+	printf "  \"$0\" is designed for e3 modules and its applications. \n";
+	printf ">>\n";
+    } 1>&2;
+    exit 1; 
+}
+
+
 
 function help
 {
@@ -129,7 +144,7 @@ function module_info
 }
 
 options=":m:u:d:y"
-SITEMODS="NO"
+SITEMODS="YES"
 
 while getopts "${options}" opt; do
     case "${opt}" in
@@ -208,17 +223,12 @@ if [ -z "${updateSource}" ]; then
 
     _E3_TGT_URL_FULL=${e3_target_url}/${_E3_MOD_NAME}
 
-
     E3_MODULE_DEST=${E3_MODULE_PATH}/${_E3_MOD_NAME};
-
 
     module_info;
 
-
     rm -rf ${E3_MODULE_DEST} ||  die 1 "We cannot remove directories ${E3_MODULE_DEST} : Please check it" ;
     mkdir -p ${E3_MODULE_DEST}/{configure/module,patch/Site,docs,cmds,template,opi}  ||  die 1 "We cannot create directories : Please check it" ;
-
-
 
     ## Copy its original Module configuration file in docs
     cp ${MODULE_CONF} ${E3_MODULE_DEST}/docs/   ||  die 1 "We cannot copy ${MODULE_CONF} to ${E3_MODULE_DEST}/docs : Please check it" ;
@@ -344,12 +354,20 @@ if [ -z "${updateSource}" ]; then
 
 else
 
+    ### Update the latest configuration files for an existent module or IOC applications
 
     UPDATE_TOP=${SC_TOP}/${EXIST_SRC_PATH}
-    
+
+
+    if [[ "$(basename ${UPDATE_TOP})" =~ "e3-require" ]] ; then
+	warning_path "$(basename ${UPDATE_TOP})"
+    elif [[ "$(basename ${UPDATE_TOP})" =~ "e3-base" ]] ; then
+	warning_path "$(basename ${UPDATE_TOP})"
+    fi
+
     pushd ${UPDATE_TOP}
-    # Get all branches
- #   git fetch origin
+    ## Get all branches
+    git fetch origin
 
     BRANCH="master";
 
@@ -358,14 +376,15 @@ else
     exit 1
     fi
     
-    # ## STOP if any changes are exist in ${BRANCH}
-    # any_changes=$(git status --porcelain --untracked-files=no)
+    ## STOP if any changes are exist in ${BRANCH}
+    any_changes=$(git status --porcelain --untracked-files=no)
     
-    # if ! [ -z "${any_changes}" ] ; then
-    # 	die "ERROR : the ${BRANCH} branch was changed, please commit them first."
-    # fi
+    if ! [ -z "${any_changes}" ] ; then
+    	die "ERROR : the ${BRANCH} branch was changed, please commit them first."
+    fi
 
-    # The following directory will be created if there is no directory. The existent files are intact. 
+    ## The following directory will be created if there is no directory.
+    ## If the directory exists, th existent files are intact.
     declare -ga directory_list=("docs" "cmds" "template" "opi" "iocsh");
 
     for a_dir in ${directory_list[@]}; do
@@ -409,6 +428,8 @@ else
 		die 1 "ERROR : we cannot find the file >>${CONFIG_MODULE}<<";
 	    else
 		module_version=$(read_version "${CONFIG_MODULE}" "E3_MODULE_VERSION");
+		_EPICS_MODULE_NAME="$(read_version "${CONFIG_MODULE}" "EPICS_MODULE_NAME")";
+		
 	    fi
 	else
 	    # If a repository is e3-require, we use the require version as module version
@@ -416,6 +437,7 @@ else
 	    module_version=${require_version}
 	fi
 	printf "\n"
+	printf "EPICS_MODULE_NAME  : %34s\n" "${_EPICS_MODULE_NAME}"
 	printf "E3 MODULE VERSION  : %34s\n" "${module_version}"
 	printf "EPICS BASE VERSION : %34s\n" "${base_version}"
 	printf "E3 REQUIRE VERSION : %34s\n" "${require_version}"
@@ -424,9 +446,24 @@ else
     } >> docs/${UPDATE_LOG}
 
 
+    # We have to use 3.0.4 require this time
+    # We will remove the following hard-code version later.
+    # Friday, November  9 15:28:18 CET 2018
+    require_version="3.0.4";
 
     echo ${PWD}
-#"configure" "configure/module" 
+
+    module_makefile=${_EPICS_MODULE_NAME}.Makefile
+    
+    printf ">>\n"
+    printf "  Replace old DECOUPLE_FLAGS within %s\n" "${module_makefile}"
+    
+    sed -i~ "s:^include \$(where_am_I).*:include \$(E3_REQUIRE_CONFIG)/DECOUPLE_FLAGS:g" ${module_makefile}
+
+    printf "  Can you see the difference between them? If you see nothing, we don't need to update %s.\n" "${module_makefile}"
+    printf "  ---------------------------------------------------------------------------------------------------------\n"
+    diff ${module_makefile}~ ${module_makefile}
+    printf "  ---------------------------------------------------------------------------------------------------------\n"
 
     WORKING_PATH="patch/Site"
     printf ">>\n"
@@ -490,24 +527,35 @@ else
 	fi
 	popd
     else
-	echo "$WORKING_PATH is exist"
+
+	printf "  $WORKING_PATH exists.\n"
 	pushd ${WORKING_PATH}
 
 	
 	if [[ $(checkIfFile "DECOUPLE_FLAGS") -eq "$EXIST" ]]; then
+	    printf "  Remove %s\n" "DECOUPLE_FLAGS"
 	    rm -f DECOUPLE_FLAGS
 	fi
 
-#	read_config_module CONFIG_MODULE  
-#	read_config_module CONFIG_MODULE_DEV
-	
 	if [ "$SITEMODS" == "YES" ]; then
-	    printf "   SITEMODS  \n";
+	    printf ">>\n"
+	    printf "  We are entering in SITEMODS.  \n";
+	    printf "  Is this right? \n" ;
+	    yes_or_no_to_go
+	    
 	    # CONFIG should be updated
+	    printf ">>\n"
+	    printf "  Update CONFIG...\n";
 	    add_CONFIG_siteMods;
+
 	    # RELEASE should be updated according to existent VERSION info
+	    printf ">>\n"
+	    printf "  Update RELEASE...with %s %s \n" "${base_path}" "${require_version}";
 	    add_RELEASE_Update "${base_path}" "${require_version}";
+
 	    # CONFIG_MODULE
+	    printf ">>\n";
+	    printf "  Update CONFIG_MODULE ...\n";
 	    file=$(mktemp -q) && {
 		read_config_module "CONFIG_MODULE" > "$file"
 		scp "$file" "CONFIG_MODULE"
@@ -518,22 +566,38 @@ else
 		scp "$file" "CONFIG_MODULE_DEV"
 		rm "$file"
 	    }
-	    # RULES should be updated 
+
+	    # RULES should be updated
+	    printf ">>\n";
+	    printf "  Update RULES ...\n";
 	    add_RULES_siteMods;
+	    
 	    # CONFIG_OPTIONS
 	    if [[ $(checkIfFile "CONFIG_OPTIONS") -eq "$NON_EXIST" ]]; then
 		add_CONFIG_OPTIONS;
 	    else
+		printf ">>\n";
 		printf "  We've found CONFIG_OPTIONS. Skip it\n";
 	    fi
 	else
-	    printf "   SITEAPPS  \n";
+	    printf ">>\n"
+	    printf "  We are entering in SITEAPPS.  \n";
+	    printf "  Is this right? \n" ;
+	    yes_or_no_to_go
+
 	    # CONFIG should be updated
+	    printf ">>\n"
+	    printf "  Update CONFIG...\n";
 	    add_CONFIG_siteApps;
+	    
 	    # RELEASE should be updated according to existent VERSION info
+	    printf ">>\n"
+	    printf "  Update RELEASE...with %s %s \n" "${base_path}" "${require_version}";
 	    add_RELEASE_Update "${base_path}" "${require_version}";
+
 	    # CONFIG_MODULE
-	    # CONFIG_MODULE
+	    printf ">>\n";
+	    printf "  Update CONFIG_MODULE ...\n";
 	    file=$(mktemp -q) && {
 		read_config_module "CONFIG_MODULE" > "$file"
 		scp "$file" "CONFIG_MODULE"
@@ -546,11 +610,14 @@ else
 	    }
 	    
 	    # RULES should be updated
+	    printf ">>\n";
+	    printf "  Update RULES ...\n";
 	    add_RULES_siteApps;
 	     # CONFIG_OPTIONS
 	    if [[ $(checkIfFile "CONFIG_OPTIONS") -eq "$NON_EXIST" ]]; then
 		add_CONFIG_OPTIONS;
 	    else
+		printf ">>\n";
 		printf "  We've found CONFIG_OPTIONS. Skip it\n";
 	    fi
 	fi
