@@ -358,6 +358,12 @@ else
 
     UPDATE_TOP=${SC_TOP}/${EXIST_SRC_PATH}
 
+    if [[ $(checkIfDir "${UPDATE_TOP}") -eq "$NON_EXIST" ]]; then
+	printf ">>\n"
+	printf "  We cannot find %s\n" "${UPDATE_TOP}"
+	printf ">>\n";
+	usage
+    fi
 
     if [[ "$(basename ${UPDATE_TOP})" =~ "e3-require" ]] ; then
 	warning_path "$(basename ${UPDATE_TOP})"
@@ -465,6 +471,16 @@ else
     diff ${module_makefile}~ ${module_makefile}
     printf "  ---------------------------------------------------------------------------------------------------------\n"
 
+    
+    vlibs_status=$(grep -r vlibs: ${module_makefile})
+
+    if [[ $(checkIfVar "${vlibs_status}") -eq "$NON_EXIST" ]]; then
+	echo "#"             >> ${module_makefile}
+	echo ".PHONY: vlibs" >> ${module_makefile}
+	echo "vlibs:"        >> ${module_makefile}
+	echo "#"             >> ${module_makefile}
+    fi
+    
     WORKING_PATH="patch/Site"
     printf ">>\n"
     printf "  Check %s .......\n" "${WORKING_PATH}"
