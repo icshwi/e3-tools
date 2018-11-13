@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Friday, November  9 15:33:12 CET 2018
-#   version : 0.6.2
+#   date    : Tuesday, November 13 22:17:44 CET 2018
+#   version : 0.7.0
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -61,17 +61,23 @@ function usage
 {
     {
 	echo "";
-	echo "Usage    : $0 [-m <module_configuraton_file>] [-d <module_destination_path>] [-u <existent_module_path>] " ;
+	echo "Usage    : $0 [-m <module_configuraton_file>] [-d <module_destination_path>]" ;
 	echo "";
 	echo "               -m : a module configuration file, please check ${SC_TOP}/modules_conf path"
 	echo "               -d : a destination, optional, Default \$PWD : ${SC_TOP} "
-	echo "               -u : an existent module path for updating configuration files";
 	echo "               -t : an existent module path for updating configuration files";
 	echo "";
 	echo "Examples in modules_conf  : ";
 	echo "";
 	echo " bash $0 -m  snmp3.conf"
 	echo " bash $0 -m  snmp3.conf -d ~/testing"
+	echo "";
+	echo "         : $0 [-u <existent_module_path>] {-y} ";
+	echo "               -u : an existent module path for updating configuration files";
+	echo "               -y : siteMods (Site Modules)"
+	echo "                  : without -y, Default is siteApps (Site Application)";
+	echo "";
+	echo "";
 	echo ""
 	
     } 1>&2;
@@ -109,6 +115,23 @@ function help
     } 1>&2;
 }
 
+
+function help_update
+{
+    {
+	printf "\n\n";
+        printf ">>>> This script cannot cover 100 percent senario of your repository. \n";
+	printf "     It would be better to check which files are updated. \n";
+	printf "\n";
+	printf "     The following commands are useful.\n"
+	printf "\n";
+	printf "   * git diff\n";
+	printf "   * git add -A\n";
+	printf "   * git checkout\n";
+    } 1>&2;
+}
+
+
 function module_info
 {
     local length=;
@@ -144,7 +167,7 @@ function module_info
 }
 
 options=":m:u:d:y"
-SITEMODS="YES"
+SITEMODS="NO"
 
 while getopts "${options}" opt; do
     case "${opt}" in
@@ -503,7 +526,7 @@ else
     if [[ $(checkIfDir "${WORKING_PATH}") -eq "$EXIST" ]]; then
 	printf "  Not Removing path ....\n";
 	printf "  One should check their changes with configure/module carefully\n";
-    # 	rm -rf ${WORKING_PATH}  ||  die 1 "We cannot create directories : Please check it" ;
+	# 	rm -rf ${WORKING_PATH}  ||  die 1 "We cannot create directories : Please check it" ;
 
     fi
 
@@ -530,8 +553,13 @@ else
 	# else
 	#     printf "  %s exists, not update it\n" "${TARGET_FILE}";
 	# fi
-	
-	add_rules_module
+
+	TARGET_FILE=RULES_MODULE
+	if [[ $(checkIfFile "${TARGET_FILE}") -eq "NON_EXIST" ]]; then
+	    add_rules_module;
+	else
+	    printf "  %s exists, not update it\n" "${TARGET_FILE}";
+	fi
 	
 	TARGET_FILE=RULES_DKMS_L
 	if [[ $(checkIfFile "${TARGET_FILE}") -eq "NON_EXIST" ]]; then
@@ -657,6 +685,9 @@ else
     fi
     
     popd # back from ${UPDATE_TOP}
+
+    help_update;
+    
 fi
 
 exit
