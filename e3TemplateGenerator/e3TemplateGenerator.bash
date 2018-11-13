@@ -356,11 +356,11 @@ else
 
     ### Update the latest configuration files for an existent module or IOC applications
 
-    UPDATE_TOP=${SC_TOP}/${EXIST_SRC_PATH}
+    UPDATE_TOP=${EXIST_SRC_PATH}
 
-    if [[ $(checkIfDir "${UPDATE_TOP}") -eq "$NON_EXIST" ]]; then
+    if [[ $(checkIfDir "${EXIST_SRC_PATH}") -eq "$NON_EXIST" ]]; then
 	printf ">>\n"
-	printf "  We cannot find %s\n" "${UPDATE_TOP}"
+	printf "  We cannot find %s\n" "${EXIST_SRC_PATH}"
 	printf ">>\n";
 	usage
     fi
@@ -408,8 +408,8 @@ else
 	printf "User               : ${SC_USER}\n";
 	printf "e3 repo Hash       : ${SC_HASH}\n";
 
-	CONFIG_MODULE=${UPDATE_TOP}/configure/CONFIG_MODULE
-	RELEASE_BASE=${UPDATE_TOP}/configure/RELEASE
+	CONFIG_MODULE=configure/CONFIG_MODULE
+	RELEASE_BASE=configure/RELEASE
 	
 	# RELEASE_BASE : EPICS_BASE
 	if [[ $(checkIfFile "${RELEASE_BASE}") -eq "NON_EXIST" ]]; then
@@ -523,7 +523,23 @@ else
 	yes_or_no_to_go
 	pushd ${WORKING_PATH}
 	printf "  Add the default configure/module files....\n";
-	add_configure_module
+
+	# TARGET_FILE=RULES_MODULE
+	# if [[ $(checkIfFile "${TARGET_FILE}") -eq "NON_EXIST" ]]; then
+	#     add_rules_modules;
+	# else
+	#     printf "  %s exists, not update it\n" "${TARGET_FILE}";
+	# fi
+	
+	add_rules_module
+	
+	TARGET_FILE=RULES_DKMS_L
+	if [[ $(checkIfFile "${TARGET_FILE}") -eq "NON_EXIST" ]]; then
+	    add_rules_dkms_l;
+	else
+	    printf "  %s exists, not update it\n" "${TARGET_FILE}";
+	fi
+
 	popd
     fi
 

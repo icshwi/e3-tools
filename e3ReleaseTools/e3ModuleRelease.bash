@@ -183,9 +183,9 @@ fi #  if ! [ -z "${IsBase}" ]; then
 
 
 printf "\n"
-printf "E3 MODULE VERSION  : %34s\n" "${module_version}"
-printf "EPICS BASE VERSION : %34s\n" "${base_version}"
-printf "E3 REQUIRE VERSION : %34s\n" "${require_version}"
+printf "E3 MODULE VERSION  : %38s\n" "${module_version}"
+printf "EPICS BASE VERSION : %38s\n" "${base_version}"
+printf "E3 REQUIRE VERSION : %38s\n" "${require_version}"
 
 
 ## MODULE  : 3.15.5-3.0.0/1.0.0-1810302033 : Branch 1.0.0
@@ -212,8 +212,8 @@ MODULE_TAG_IN_BRANCH+=${SC_LOGDATE}
 MODULE_BRANCH_NAME=${module_version}
 
 printf "\n"
-printf "MODULE BRANCH      : %34s\n"   "$MODULE_BRANCH_NAME"
-printf "MODULE TAG         : %34s\n\n" "$MODULE_TAG_IN_BRANCH"
+printf "MODULE BRANCH      : %38s\n"   "$MODULE_BRANCH_NAME"
+printf "MODULE TAG         : %38s\n\n" "$MODULE_TAG_IN_BRANCH"
 
 
 case "$1" in
@@ -342,6 +342,8 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 	    
 	fi
     fi
+    # Return to master
+    git checkout ${BRANCH}
 else
     ### Check the existent tag in the $BRANCH
     tag_list=$(git tag -l |grep "/${MODULE_BRANCH_NAME}-")
