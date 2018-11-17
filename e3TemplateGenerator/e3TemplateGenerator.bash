@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Wednesday, November 14 16:24:13 CET 2018
-#   version : 0.7.1
+#   date    : Saturday, November 17 22:54:21 CET 2018
+#   version : 0.7.2
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -252,7 +252,8 @@ if [ -z "${updateSource}" ]; then
 
     rm -rf ${E3_MODULE_DEST} ||  die 1 "We cannot remove directories ${E3_MODULE_DEST} : Please check it" ;
     mkdir -p ${E3_MODULE_DEST}/{configure/module,patch/Site,docs,cmds,template,opi,iocsh}  ||  die 1 "We cannot create directories : Please check it" ;
-
+    touch ${E3_MODULE_DEST}/{cmds,template,opi,iocsh}/.keep
+        
     ## Copy its original Module configuration file in docs
     cp ${MODULE_CONF} ${E3_MODULE_DEST}/docs/   ||  die 1 "We cannot copy ${MODULE_CONF} to ${E3_MODULE_DEST}/docs : Please check it" ;
 
@@ -419,6 +420,7 @@ else
     for a_dir in ${directory_list[@]}; do
 	if [[ $(checkIfDir "${a_dir}") -eq "$NON_EXIST" ]]; then
 	    mkdir -p ${a_dir}  ||  die 1 "We cannot create directories : Please check it" ;
+	    touch ${a_dir}/.keep
 	fi
     done
     
