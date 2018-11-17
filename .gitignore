@@ -3,4 +3,5 @@
 *\#*
 e3-*
 .MODULE_LOG
+*.Makefile
 
