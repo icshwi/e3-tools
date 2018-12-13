@@ -12,7 +12,7 @@ One should define and understand the following variables first. It is important 
 * ```EPICS_MODULE_URL```   : shown as the module source repoistory URL
 * ```E3_TARGET_URL```      : used for the E3 module repository 
 
-
+**Note that this name should be letters (upper and lower case) and digits.** The underscore character `_` is also permitted. Technically, this name is coverted into char variable within c program. Thus, it should follow the c programming variable rule. 
 
 ## Site Apps / IOCs (siteApps)
 
