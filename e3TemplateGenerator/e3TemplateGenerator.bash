@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Saturday, November 17 22:54:21 CET 2018
-#   version : 0.7.2
+#   date    : Monday, December 24 21:12:14 CET 2018
+#   version : 0.7.3
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -132,6 +132,19 @@ function help_update
 }
 
 
+function help_modulename
+{
+    local name="$1"; shift;
+    {
+	printf ">>\n";
+	printf "  We've detected that your module name %s is not acceptable.\n" "$name"
+	printf "  Please use letters (upper and lower case) and digits.\n"
+	printf "  The underscore character _ is also permitted.\n" 
+	printf ">>\n";
+    } 1>&2;
+    exit 1; 
+}
+
 function module_info
 {
     local length=;
@@ -214,6 +227,24 @@ if [ -z "${updateSource}" ]; then
 	e3_target_url="$(read_version "${MODULE_CONF}" "E3_TARGET_URL")";
 	epics_mod_url="$(read_version "${MODULE_CONF}" "EPICS_MODULE_URL")";
 #	site_mod_status="$(read_version "${MODULE_CONF}" "E3_SITEMODS")";
+
+	
+	# Not very good logic, but we remove all other special characters first,
+	# then select only letter and digits,
+	# then if they have -, we can use as module name
+	
+	if [[ $_EPICS_MODULE_NAME =~ [-+@()=!#$%^\&*|~]+ ]]; then
+	    help_modulename "$_EPICS_MODULE_NAME"
+	elif [[ $_EPICS_MODULE_NAME =~ [A-Z0-9]+ ]]; then
+	    printf ">>\n";
+	    printf "%s is used as module name.\n" "$_EPICS_MODULE_NAME"
+	elif [[ $_EPICS_MODULE_NAME =~ [_]+ ]]; then
+	    printf ">>\n";
+	    printf "%s is used as module name.\n" "$_EPICS_MODULE_NAME"
+	else
+	    help_modulename "$_EPICS_MODULE_NAME"
+	fi
+
 	
 	if [ -z "${epics_mod_url}" ] ; then
 	    localsrc="1";
