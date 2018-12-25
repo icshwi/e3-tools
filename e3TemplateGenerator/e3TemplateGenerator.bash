@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Monday, December 24 21:12:14 CET 2018
-#   version : 0.7.3
+#   date    : Tuesday, December 25 23:58:25 CET 2018
+#   version : 0.7.4
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -235,7 +235,7 @@ if [ -z "${updateSource}" ]; then
 	
 	if [[ $_EPICS_MODULE_NAME =~ [-+@()=!#$%^\&*|~]+ ]]; then
 	    help_modulename "$_EPICS_MODULE_NAME"
-	elif [[ $_EPICS_MODULE_NAME =~ [A-Z0-9]+ ]]; then
+	elif [[ $_EPICS_MODULE_NAME =~ [A-Za-z0-9]+ ]]; then
 	    printf ">>\n";
 	    printf "%s is used as module name.\n" "$_EPICS_MODULE_NAME"
 	elif [[ $_EPICS_MODULE_NAME =~ [_]+ ]]; then
