@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Tuesday, December 25 23:58:25 CET 2018
-#   version : 0.7.4
+#   date    : Wednesday, December 26 02:47:47 CET 2018
+#   version : 0.7.5
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -314,6 +314,9 @@ if [ -z "${updateSource}" ]; then
 	echo ${_E3_MODULE_SRC_PATH}
 	mkdir -p ${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/{Db,src} ||  die 1 "We cannot create directories : Please check it" ;
 
+	touch ${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/{Db,src}/.keep
+
+	
 	if [[ "${_EPICS_MODULE_NAME}" =~ "example" ]]; then 
 	    addExampleSrc  "${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/src" 
 	    addExampleDb   "${_E3_MODULE_SRC_PATH}/${_EPICS_MODULE_NAME}App/Db" 
@@ -325,7 +328,7 @@ if [ -z "${updateSource}" ]; then
 
     ## add the default .gitignore
     add_gitignore
-
+   
 
     ## add README.md
     if [ "$SITEMODS" == "YES" ]; then
@@ -341,7 +344,11 @@ if [ -z "${updateSource}" ]; then
     ## This is the template file. One should change it accroding to their
     ## corresponding module
     if ! [ -z "${localsrc}" ]; then
-	add_local_module_makefile "${_EPICS_MODULE_NAME}"
+	if [[ "${_EPICS_MODULE_NAME}" =~ "example" ]]; then
+	    add_local_example_makefile  "${_EPICS_MODULE_NAME}"
+	else
+	    add_module_makefile  "${_EPICS_MODULE_NAME}" 
+	fi
     else
 	add_module_makefile  "${_EPICS_MODULE_NAME}"
     fi
@@ -355,9 +362,20 @@ if [ -z "${updateSource}" ]; then
 
     pushd configure  # Enter in configure
     if [ "$SITEMODS" == "YES" ]; then
-	add_configure_siteMods
+	if ! [ -z "${localsrc}" ]; then
+	    printf ">>\n"
+	    printf "  Local Mode should be the siteApps instead of siteMods\n";
+	    printf "  We cannot do further, and stop it\n";
+	    exit ;
+	else
+	    add_configure_siteMods
+	fi
     else
-	add_configure_siteApps;
+	if ! [ -z "${localsrc}" ]; then
+	    add_configure_siteApps_local
+	else
+	    add_configure_siteApps;
+	fi
     fi
     popd             # Back from configure
 
@@ -613,6 +631,8 @@ else
 	printf "  Creating path ....\n";
 	mkdir -p ${WORKING_PATH}  ||  die 1 "We cannot create directories : Please check it" ;
 	pushd ${WORKING_PATH}
+
+	# We don't expect here that we have the local mode
 	if [ "$SITEMODS" == "YES" ]; then
 	    add_configure_siteMods
 	else
