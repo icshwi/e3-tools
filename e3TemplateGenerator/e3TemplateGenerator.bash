@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Wednesday, December 26 02:47:47 CET 2018
-#   version : 0.7.5
+#   date    : Thursday, January 10 13:36:27 CET 2019
+#   version : 0.7.6
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -399,7 +399,7 @@ if [ -z "${updateSource}" ]; then
 	    printf ">>>> We are going to the further process ...... ";
 	    git remote add origin ${_E3_TGT_URL_FULL} ||  die 1 "Cannot add ${_E3_TGT_URL_FULL} in origin: Please check your git env!" ;
 	    git commit -m "Init..${_E3_MOD_NAME}"     ||  die 1 "We cannot commit, maybe you need to run git config user and so on." ;
-	    git push -u origin master                 ||  die 1 "Repository is not at ${_E3_TGT_URL_FULL} : Please create it first!" ;
+	    git push -u origin master                 ||  die 1 "Repository is not or already exists in ${_E3_TGT_URL_FULL} : Please check it first!" ;
 	    
 	    ;;
 	* )
