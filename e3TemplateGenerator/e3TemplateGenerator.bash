@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Thursday, January 10 13:36:27 CET 2019
-#   version : 0.7.6
+#   date    : Thursday, January 10 16:02:51 CET 2019
+#   version : 0.7.7
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -114,6 +114,25 @@ function help
 	printf "   * git push -u origin master\n";
     } 1>&2;
 }
+
+
+function help_exit
+{
+    {
+	printf "\n\n";
+        printf ">>>> Skipping add the remote repository url. \n";
+	printf "     And skipping push the ${_E3_MOD_NAME} to the remote also.\n";
+	printf "\n";
+	printf "In case, one would like to push this e3 module to git repositories,\n"
+	printf "Please use the following commands within ${_E3_MOD_NAME}/ :\n"
+	printf "\n";
+	printf "   * git remote add origin ${_E3_TGT_URL_FULL}\n";
+	printf "   * git commit -m \"First commit\"\n";
+	printf "   * git push -u origin master\n";
+    } 1>&2;
+    exit 0; 
+}
+
 
 
 function help_update
@@ -275,7 +294,7 @@ if [ -z "${updateSource}" ]; then
 	_E3_MODULE_GITURL_FULL=${epics_mod_url}/${_E3_MODULE_SRC_PATH}
     fi
 
-    _E3_TGT_URL_FULL=${e3_target_url}/${_E3_MOD_NAME}
+    _E3_TGT_URL_FULL=${e3_target_url}/${_E3_MOD_NAME}.git
 
     E3_MODULE_DEST=${E3_MODULE_PATH}/${_E3_MOD_NAME};
 
@@ -396,10 +415,32 @@ if [ -z "${updateSource}" ]; then
     read -p "     If yes, the script will push the local ${_E3_MOD_NAME} to the remote repository. (y/N)? " answer
     case ${answer:0:1} in
 	y|Y|yes|Yes|YES )
-	    printf ">>>> We are going to the further process ...... ";
-	    git remote add origin ${_E3_TGT_URL_FULL} ||  die 1 "Cannot add ${_E3_TGT_URL_FULL} in origin: Please check your git env!" ;
-	    git commit -m "Init..${_E3_MOD_NAME}"     ||  die 1 "We cannot commit, maybe you need to run git config user and so on." ;
-	    git push -u origin master                 ||  die 1 "Repository is not or already exists in ${_E3_TGT_URL_FULL} : Please check it first!" ;
+
+	    returnvalue=$(git ls-remote -q ${_E3_TGT_URL_FULL} master)
+	    return_code=$?
+
+	    if [ $return_code = 0 ]; then
+		printf "\n"
+		printf ">>>> Repository exists!!!";
+		printf "     Are you sure this is your first push?\n";
+		#
+		# If yes, go to the git commands below. If no, execute help_exit function (print help, and exit)
+		#
+		yes_or_no_to_go_args "help_exit"
+		printf "\n"
+		printf "\n"
+		printf ">>>> We are going to the further process ...... ";
+		git remote add origin ${_E3_TGT_URL_FULL} ||  die 1 "Cannot add ${_E3_TGT_URL_FULL} in origin: Please check your git env!" ;
+		git commit -m "Init..${_E3_MOD_NAME}"     ||  die 1 "We cannot commit, maybe you need to run git config user and so on." ;
+		git push -u origin master                 ||  die 1 "Repository exists in ${_E3_TGT_URL_FULL}, and it is not the first push!" ;
+
+	    else
+		printf "\n"
+		printf ">>>> We are going to the further process ...... ";
+		git remote add origin ${_E3_TGT_URL_FULL} ||  die 1 "Cannot add ${_E3_TGT_URL_FULL} in origin: Please check your git env!" ;
+		git commit -m "Init..${_E3_MOD_NAME}"     ||  die 1 "We cannot commit, maybe you need to run git config user and so on." ;
+		git push -u origin master                 ||  die 1 "Repository does not exist in ${_E3_TGT_URL_FULL} : Please create it first!" ;
+	    fi
 	    
 	    ;;
 	* )
@@ -417,6 +458,7 @@ if [ -z "${updateSource}" ]; then
     echo "";
     echo "   * ${E3_MODULE_DEST}/configure/CONFIG_MODULE"
     echo "   * ${E3_MODULE_DEST}/configure/RELEASE"
+    echo "   * ${E3_MODULE_DEST}/${_EPICS_MODULE_NAME}.Makefile"
     echo "";
     echo "One can check the e3- template works via ";
     echo "   cd ${E3_MODULE_DEST}"
