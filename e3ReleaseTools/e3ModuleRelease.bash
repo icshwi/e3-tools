@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Tuesday, November  6 17:51:01 CET 2018
-#   version : 0.0.10
+#   date    : Thursday, February  7 23:08:54 CET 2019
+#   version : 0.0.11
 #
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -88,6 +88,7 @@ fi
 
 print_options
 
+
 MODULE_TOP=${PWD}
 
 # Get all branches
@@ -116,10 +117,34 @@ HEAD_HASH_TAG=$(git rev-parse --short HEAD)
 
 
 ## STOP if any changes are exist in ${BRANCH}
+declare -a any_changes=()
 any_changes=$(git status --porcelain --untracked-files=no)
 
+print_options
+
+
 if ! [ -z "${any_changes}" ] ; then
-    die "ERROR : the ${BRANCH} branch was changed, please commit them first."
+    if [[ "${#any_changes[@]}" == "1" ]]; then
+	changed_name=$(echo "${any_changes[0]}"| cut -d" " -f3)
+	CONFIG_MODULE=${MODULE_TOP}/configure/CONFIG_MODULE
+	if [[ $(checkIfFile "${CONFIG_MODULE}") -eq "NON_EXIST" ]]; then
+	    printf "Maybe you are not in any module directory\n";
+	    die 1 "ERROR : we cannot find the file >>${CONFIG_MODULE}<<";
+	else
+	    module_name=$(read_version "${CONFIG_MODULE}" "E3_MODULE_SRC_PATH");
+	fi
+	if [[ "$changed_name" =~ "$module_name" ]] ; then
+	    printf "\n>> Modified file name >>%s<< is the module src path >>%s<< \n" "$changed_name" "$module_name";
+	    printf "   We can ignore this case.\n\n";
+	else
+	    die "ERROR : the ${BRANCH} branch was changed, but we don't know how to resolve it"
+	fi
+
+    else
+	die "ERROR : the ${BRANCH} branch was changed, please check your branch first."
+    fi
+    
+  
 fi
 
 
