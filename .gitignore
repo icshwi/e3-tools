@@ -6,4 +6,4 @@ e3-*
 *.Makefile
 index.html
 *toolchain-*.sh
-
+cc_setup/toolchain/

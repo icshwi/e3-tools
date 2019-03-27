@@ -8,9 +8,7 @@ Download latest toolchains (ifc14xx and cct) and install them in
 /opt/ifc14xx/2.6-4.14
 /opt/cct/2.6-4.14/
 ```
-,where `2.6-4.14` can be changed according to the latest version. One needs `SUDO` permission. 
-
-
+,where `2.6-4.14` can be changed according to the latest version. One needs `SUDO` permission. Each path also has a file with the `SHA-` prefix, which tells us which hash id was used to create each toolchain. 
 
 ```
 cc_setup (master)$ bash toolchain_setup.bash
