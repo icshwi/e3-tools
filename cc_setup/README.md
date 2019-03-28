@@ -1,4 +1,4 @@
-Cross Compiler Setup
+ESS Yocto Linux Cross Compiler Setup
 ===
 
 The `setup_toolchain.bash` will download latest toolchains of ESS ICS Yocto Linux for IFC14xx and Concurrent CPU, and will install them into the following paths:
