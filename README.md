@@ -1,23 +1,29 @@
 e3-tools
 ===
 
-# e3ReleaseTools
+## cc_setup
+
+[README.md](./cc_setup/README.md) in more detail.
+
+
+
+## e3ReleaseTools
 
 [README.md](./e3ReleaseTools/README.md) in more detail. 
   
-# e3TemplateGenerator
+## e3TemplateGenerator
 
 [README.md](./e3TemplateGenerator/README.md) in more detail. 
 
-# rt_conf
+## rt_conf
 
 [README.md](./rt_conf/README.md) in more detail. 
 
-# git_helper_scripts
+## git_helper_scripts
 
-# scripts
+## scripts
 
-# user_env
+## user_env
 
 [README.md](./user_env/README.md) in more detail. 
 
