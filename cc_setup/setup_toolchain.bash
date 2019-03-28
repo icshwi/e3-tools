@@ -90,8 +90,6 @@ function download_toolchain
     pushd ${SC_TOP}
 
     if [[ $(checkIfDir "${tc_path}") -eq "$EXIST" ]]; then
-	echo ${tc_path}
-	echo ${tc_path}_${SC_LOGDATE}
      	mv -f ${tc_path} ${tc_path}_${SC_LOGDATE}
     fi
     mkdir -p ${tc_path}
