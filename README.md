@@ -2,18 +2,15 @@ e3-tools
 ===
 
 ## cc_setup
-
-[README.md](./cc_setup/README.md) in more detail.
+ESS Yocto Linux Crosscompiler Setup. [README.md](./cc_setup/README.md) in more detail.
 
 
 
 ## e3ReleaseTools
-
-[README.md](./e3ReleaseTools/README.md) in more detail. 
+ESS EPICS Environment Module Release Tool. [README.md](./e3ReleaseTools/README.md) in more detail. 
   
 ## e3TemplateGenerator
-
-[README.md](./e3TemplateGenerator/README.md) in more detail. 
+ESS EPICS Environment Module Template Generator Tool. [README.md](./e3TemplateGenerator/README.md) in more detail. 
 
 ## rt_conf
 
