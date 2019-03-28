@@ -17,13 +17,14 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Wednesday, March 27 21:15:10 CET 2019
-# version : 0.0.2
+# Date    : Thursday, March 28 09:58:42 CET 2019
+# version : 0.0.3
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
 declare -gr SC_TOP="${SC_SCRIPT%/*}"
-declare -g SC_VERSION="v0.0.2"
+declare -gr SC_LOGDATE="$(date +%y%m%d%H%M%S)"
+declare -g SC_VERSION="v0.0.3"
 
 
 EXIST=1
@@ -34,16 +35,21 @@ SUDO="sudo"
 function pushd { builtin pushd "$@" > /dev/null; }
 function popd  { builtin popd  "$@" > /dev/null; }
 
-
-function die
+function checkIfDir
 {
-    error=${1:-1}
-    ## exits with 1 if error number not given
-    shift
-    [ -n "$*" ] &&
-	printf "%s%s: %s\n" "$scriptname" ${version:+" ($version)"} "$*" >&2
-    exit "$error"
-}
+    
+    local dir=$1
+    local result=""
+    if [ ! -d "$dir" ]; then
+	result=$NON_EXIST
+	# doesn't exist
+    else
+	result=$EXIST
+	# exist
+    fi
+    echo "${result}"
+};
+
 
 function get_latest_build
 {
@@ -52,11 +58,11 @@ function get_latest_build
     echo $latest;
 }
 
-WGET_TOP_PATH="artifactory.esss.lu.se"
+WGET_TOP=".wget_top"
 # the last / is mandatory for curl
-WGET_PATH="${WGET_TOP_PATH}/artifactory/yocto/toolchain/"
+WGET_PATH="artifactory.esss.lu.se/artifactory/yocto/toolchain/"
 TOOLCHAIN_URL="https://${WGET_PATH}"
-TOOLCHAIN_LOCAL_PATH="${SC_TOP}/toolchain/"
+TOOLCHAIN_LOCAL_PATH="${SC_TOP}/toolchain"
 
 #INTEL="cct-glibc-x86_64-cct-toolchain-corei7-64-toolchain-2.6-4.14.sh"
 #IOXOS="ifc14xx-glibc-x86_64-ifc14xx-toolchain-ppc64e6500-toolchain-2.6-4.14.sh"
@@ -65,12 +71,36 @@ TOOLCHAIN_LOCAL_PATH="${SC_TOP}/toolchain/"
 function download_toolchain
 {
     local latest=$1;shift;
+
+    local dn_path=${SC_TOP}/${WGET_TOP}
+    local tc_path=${TOOLCHAIN_LOCAL_PATH}
+
+    echo ${dn_path}_${SC_LOGDATE}
     
+    if [[ $(checkIfDir "${dn_path}") -eq "$EXIST" ]]; then
+	mv -f ${dn_path} ${dn_path}_${SC_LOGDATE}
+    fi
+    mkdir -p ${dn_path}
+	
+    
+    pushd ${dn_path}
     wget -r -e robots=off -l1 -R "index.html*" -R "index.html.*" -A "*.sh" -A "SHA-*" ${TOOLCHAIN_URL}/${latest}
-    mkdir -p ${TOOLCHAIN_LOCAL_PATH}
-    mv ${WGET_PATH}/${latest}/*.sh ${TOOLCHAIN_LOCAL_PATH}/
-    mv ${WGET_PATH}/${latest}/SHA* ${TOOLCHAIN_LOCAL_PATH}/
-    rm -rf ${SC_TOP}/${WGET_TOP_PATH}
+    popd
+    
+    pushd ${SC_TOP}
+
+    if [[ $(checkIfDir "${tc_path}") -eq "$EXIST" ]]; then
+	echo ${tc_path}
+	echo ${tc_path}_${SC_LOGDATE}
+     	mv -f ${tc_path} ${tc_path}_${SC_LOGDATE}
+    fi
+    mkdir -p ${tc_path}
+    
+    mv ${dn_path}/${WGET_PATH}/${latest}/*.sh ${tc_path}/
+    mv ${dn_path}/${WGET_PATH}/${latest}/SHA* ${tc_path}/
+    popd
+    
+    rm -rf ${dn_path}
 }
 
 
