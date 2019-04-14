@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (c) 2016 - Present Jeong Han Lee
+#  Copyright (c) 2016 - 2019    Jeong Han Lee
 #  Copyright (c) 2016           European Spallation Source ERIC
 
 #  This shell script is free software: you can redistribute
@@ -16,10 +16,10 @@
 #  You should have received a copy of the GNU General Public License along with
 #  this program. If not, see https://www.gnu.org/licenses/gpl-2.0.txt
 #
-# Author : Jeong Han Lee
-# email  : han.lee@esss.se
-# Date   : 
-# version : 0.0.4
+# Author  : Jeong Han Lee
+# email   : jeonghan.lee@gmail.com
+# Date    : Monday, April 15 00:50:20 CEST 2019
+# version : 0.0.5
 
 set -efo pipefail
 
@@ -130,7 +130,9 @@ function make_install_ssh_mode() {
 function get_gits() {
 
     local func_name=${FUNCNAME[*]}; ini_func ${func_name};
-    local web_site="https://raw.githubusercontent.com/git/git/master/contrib/completion"
+
+    local git_version=$(git --version | cut -d" " -f 3)
+    local web_site="https://raw.githubusercontent.com/git/git/v${git_version}/contrib/completion"
     local git_prompt="${HOME}/.${GIT_PROMPT}";
     local git_completion="${HOME}/.${GIT_COMPET}";
 
