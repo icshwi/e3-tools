@@ -24,6 +24,8 @@ Use the CERN CentOS 7 rt repository [1]
 
 # Tuning the Kernel boot parameters
 
+According to the Reference [2], we select the minimum boot parameters as follows:
+
 * idle=pool (with the assumption that TSC is selected as the system clock source)
 * intel_idle.max_cstate=0
 * processor.max_cstate=1
@@ -46,5 +48,6 @@ echo tsc > /sys/devices/system/clocksource/clocksource0/current_clocksource
 
 # References
 
-[1] http://linux.web.cern.ch/linux/centos7/
-[2] https://en.wikipedia.org/wiki/Time_Stamp_Counter
+[1] http://linux.web.cern.ch/linux/centos7/  
+[2] https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux_for_real_time/7/  
+[3] https://en.wikipedia.org/wiki/Time_Stamp_Counter  
