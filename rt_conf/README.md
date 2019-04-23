@@ -29,6 +29,21 @@ Use the CERN CentOS 7 rt repository [1]
 * processor.max_cstate=1
 * skew_tick=1
 
+## Clock Source
+
+* Check the current clock source
+```
+cat /sys/devices/system/clocksource/clocksource0/current_clocksource
+```
+* Check the available clock source
+```
+cat /sys/devices/system/clocksource/clocksource0/available_clocksource
+```
+* Select the tsc as the current clock
+```
+echo tsc > /sys/devices/system/clocksource/clocksource0/current_clocksource
+```
+
 # References
 
 [1] http://linux.web.cern.ch/linux/centos7/
