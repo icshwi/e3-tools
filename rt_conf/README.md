@@ -39,7 +39,7 @@ cat /sys/devices/system/clocksource/clocksource0/current_clocksource
 ```
 cat /sys/devices/system/clocksource/clocksource0/available_clocksource
 ```
-* Select the tsc as the current clock
+* Select the tsc (Time Stamp Counter) [2] as the current clock
 ```
 echo tsc > /sys/devices/system/clocksource/clocksource0/current_clocksource
 ```
@@ -47,3 +47,4 @@ echo tsc > /sys/devices/system/clocksource/clocksource0/current_clocksource
 # References
 
 [1] http://linux.web.cern.ch/linux/centos7/
+[2] https://en.wikipedia.org/wiki/Time_Stamp_Counter
