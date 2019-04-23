@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-#  Copyright (c) 2018 Jeong Han Lee
-#  Copyright (c) 2018 European Spallation Source ERIC
+#  Copyright (c) 2018        Jeong Han Lee
+#  Copyright (c) 2018 - 2019 European Spallation Source ERIC
 #
 #  The program is free software: you can redistribute
 #  it and/or modify it under the terms of the GNU General Public License
@@ -18,9 +18,9 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Tuesday, September 25 01:38:20 CEST 2018
+# Date    : Tuesday, April 23 17:24:10 CEST 2019
 #
-# version : 0.0.5
+# version : 0.0.6
 
 # Only aptitude can understand the extglob option
 shopt -s extglob
@@ -37,6 +37,20 @@ declare -g GRUB_CONF=/etc/default/grub
 #declare -g GRUB_CONF=${SC_TOP}/grub
 
 declare -g SED="sed i~"
+
+
+
+function die
+{
+    error=${1:-1}
+    ## exits with 1 if error number not given
+    shift
+    [ -n "$*" ] &&
+	printf "%s%s: %s\n" "$scriptname" ${version:+" ($version)"} "$*" >&2
+    exit "$error"
+}
+
+
 
 function find_dist
 {
@@ -135,9 +149,14 @@ EOF
 
     ${SUDO_CMD} rpm --import http://linuxsoft.cern.ch/cern/centos/7/os/x86_64/RPM-GPG-KEY-cern
     ${SUDO_CMD} yum update -y
-    ${SUDO_CMD} yum -y groupinstall RT
-    ${SUDO_CMD} yum -y install kernel-rt-devel tuned-profiles-realtime
-
+# Somehow linuxsoft.cern.ch and CentOS doesn't have tuned 2.9.0 version, so
+# update repo has 2.10.0, without the fixed version we cannot install RT group,
+# so, we fixed the version 2.8.0 first on tuned. 
+#
+    ${SUDO_CMD} yum -y tuned-profiles-realtime-2.8.0-5.el7_4.2 yum-plugin-versionlock | die 1 "ERROR: yum tuned-profiled-realtime-2.8.0, please check it manually."
+    ${SUDO_CMD} yum versionlock tuned tuned-profiles-realtime | die 1 "ERROR: versionlock failed, please check it manually." 
+    ${SUDO_CMD} yum -y groupinstall RT | die 1 "ERROR: yum groupinstall RT, please check it manually."
+    ${SUDO_CMD} yum -y install kernel-rt-devel  | die 1 "ERROR: install kernel-rt-devel, please check it manually."
 
 }
 
@@ -243,7 +262,7 @@ case "$dist" in
 	;;
 esac
 
-disable_system_service
+#disable_system_service
 
 
 printf "\n"
