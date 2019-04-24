@@ -4,22 +4,42 @@ Linux RT PREEMPT Kernel Installation and Configuration
 In the simple script, one can change a normal kernel to a Realtime PREEMPT kernel in Debian 9 and CentOS7.
 
 
+# Commmands
+
+## Debian 9 and Community CentOS 7
+```
+bash rt_conf.bash
+```
+
+## ESS CentOS 7
+I don't recommend this script, please contact relevant persons to ask the real time kernel support. 
+Even if one would like to try this script (It will switch the entire environment to the generic one, 
+one cannot revert these changes), run the script with an argument as follows:
+
+```
+bash rt_conf.bash clean
+```
+
 # Packages
 
 ## Remove unnecessary packages
 * postfix
 * sendmail
+* cups
 
 ## Install maybe necessary packages
 * ethtool
 
 # Install RT Kernel image and header files
 
+Current CentOS repositories have the broken dependency issues. This approach is weird, but
+we need to move forward. Please use the generic CentOS 7.  
+
 ## Debian 9
 Use the default Debian repository
 
 ## CentOS 7
-Use the CERN CentOS 7 rt repository [1] 
+Use the CERN CentOS 7 rt repository [1]. Note that CentOS 7 should be generic one. 
 
 
 # Tuning the Kernel boot parameters
@@ -31,7 +51,10 @@ According to the Reference [2], we select the minimum boot parameters as follows
 * processor.max_cstate=1
 * skew_tick=1
 
-## Clock Source
+# Clock Source
+
+The tuned kernel boot parameters have the requirement of TSC clock. Please check it
+and select TSC if not. 
 
 * Check the current clock source
 ```
@@ -45,6 +68,20 @@ cat /sys/devices/system/clocksource/clocksource0/available_clocksource
 ```
 echo tsc > /sys/devices/system/clocksource/clocksource0/current_clocksource
 ```
+
+# Additional Tuning
+
+## CLI
+```
+$ systemctl get-default
+graphical.target
+$ systemctl set-default multi-user.target
+$ reboot
+```
+
+## BIOS 
+
+Disable Power Saving and other features.
 
 # References
 

@@ -18,7 +18,7 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Tuesday, April 24 1354 CEST 2019
+# Date    : Thursday, April 25 00:07:56 CEST 2019
 #
 # version : 0.1.0
 
@@ -215,17 +215,18 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-cern
 EOF
 
     ${SUDO_CMD} rpm --import http://linuxsoft.cern.ch/cern/centos/7/os/x86_64/RPM-GPG-KEY-cern
- #   ${SUDO_CMD} yum clean all
+ 
     ${SUDO_CMD} yum update -y
+#
 # Somehow linuxsoft.cern.ch and CentOS doesn't have tuned 2.9.0 version, so
 # update repo has 2.10.0, without the fixed version we cannot install RT group,
 # so, we fixed the version 2.8.0 first on tuned. 
 #
     ${SUDO_CMD} yum -y remove  "tuned-*"
     ${SUDO_CMD} yum -y install tuna yum-plugin-versionlock 
-    ${SUDO_CMD} yum -y install --disablerepo="*" --enablerepo="rt" tuned-profiles-realtime-2.8.0-5.el7_4.2 | die 1 "ERROR: yum tuned-profiled-realtime-2.8.0, please check it manually."
-    ${SUDO_CMD} yum versionlock tuned tuned-profiles-realtime | die 1 "ERROR: versionlock failed, please check it manually." 
-    ${SUDO_CMD} yum -y install kernel-rt rt-setup rtcheck rtctl rteval rteval-common rteval-loads kernel-rt-devel  | die 1 "ERROR: install kernel-rt-devel, please check it manually."
+    ${SUDO_CMD} yum -y install --disablerepo="*" --enablerepo="rt" tuned-profiles-realtime-2.8.0-5.el7_4.2
+    ${SUDO_CMD} yum versionlock tuned tuned-profiles-realtime
+    ${SUDO_CMD} yum -y install kernel-rt rt-setup rtcheck rtctl rteval rteval-common rteval-loads kernel-rt-devel 
     
 }
 
@@ -244,16 +245,16 @@ function centos_pkgs
 {
     local remove_pkg_name="postfix sendmail";
     printf "Removing .... %s\n" ${remove_pkg_name}
-    ${SUDO_CMD} yum -y remove postfix sendmail
+    ${SUDO_CMD} yum -y remove postfix sendmail cups
     printf "Installing .... ethtool\n";
-    ${SUDO_CMD} yum -y install ethtool yum-plugin-versionlock 
+    ${SUDO_CMD} yum -y install ethtool
 }
 
 function debian_pkgs
 {
     local remove_pkg_name="postfix sendmail";
     printf "Removing .... %s\n" ${remove_pkg_name}
-    ${SUDO_CMD} apt remove -y postfix sendmail
+    ${SUDO_CMD} apt remove -y postfix sendmail cups
     printf "Installing .... ethtool\n";
     ${SUDO_CMD} apt install -y aptitude ethtool
 }
