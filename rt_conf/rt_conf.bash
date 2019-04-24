@@ -200,7 +200,8 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-cern
 EOF
 
     ${SUDO_CMD} rpm --import http://linuxsoft.cern.ch/cern/centos/7/os/x86_64/RPM-GPG-KEY-cern
-#    ${SUDO_CMD} yum update -y
+    ${SUDO_CMD} yum clean all
+    ${SUDO_CMD} yum update -y
 # Somehow linuxsoft.cern.ch and CentOS doesn't have tuned 2.9.0 version, so
 # update repo has 2.10.0, without the fixed version we cannot install RT group,
 # so, we fixed the version 2.8.0 first on tuned. 
