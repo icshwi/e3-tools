@@ -18,9 +18,9 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Tuesday, April 23 17:24:10 CEST 2019
+# Date    : Tuesday, April 24 1354 CEST 2019
 #
-# version : 0.0.6
+# version : 0.0.7
 
 # Only aptitude can understand the extglob option
 shopt -s extglob
@@ -36,7 +36,7 @@ declare -g KERNEL_VER=$(uname -r)
 declare -g GRUB_CONF=/etc/default/grub
 #declare -g GRUB_CONF=${SC_TOP}/grub
 
-declare -g SED="sed i~"
+declare -g SED="sed"
 
 
 
@@ -50,6 +50,58 @@ function die
     exit "$error"
 }
 
+# the following function drop_from_path was copied from
+# the ROOT build system in ${ROOTSYS}/bin/, and modified
+# a little to return its result 
+# Wednesday, July 11 23:19:00 CEST 2018, jhlee 
+drop_from_path ()
+{
+    #
+    # Assert that we got enough arguments
+    if test $# -ne 2 ; then
+	echo "drop_from_path: needs 2 arguments"
+	return 1
+    fi
+
+    local p="$1"
+    local drop="$2"
+
+    local new_path=`echo "$p" | sed -e "s;:${drop}:;:;g" \
+                 -e "s;:${drop};;g"   \
+                 -e "s;${drop}:;;g"   \
+                 -e "s;${drop};;g";`
+    echo ${new_path}
+}
+
+
+set_variable ()
+{
+    if test $# -ne 2 ; then
+	echo "set_variable: needs 2 arguments"
+	return 1
+    fi
+
+    local old_path="$1"
+    local add_path="$2"
+
+    local new_path=""
+    local system_old_path=""
+
+    if [ -z "$old_path" ]; then
+	new_path=${add_path}
+    else
+	system_old_path=$(drop_from_path "${old_path}" "${add_path}")
+	if [ -z "$system_old_path" ]; then
+	    new_path=${add_path}
+	else
+	    new_path=${add_path}:${system_old_path}
+	fi
+   
+    fi
+
+    echo "${new_path}"
+    
+}
 
 
 function find_dist
@@ -148,16 +200,15 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-cern
 EOF
 
     ${SUDO_CMD} rpm --import http://linuxsoft.cern.ch/cern/centos/7/os/x86_64/RPM-GPG-KEY-cern
-    ${SUDO_CMD} yum update -y
+#    ${SUDO_CMD} yum update -y
 # Somehow linuxsoft.cern.ch and CentOS doesn't have tuned 2.9.0 version, so
 # update repo has 2.10.0, without the fixed version we cannot install RT group,
 # so, we fixed the version 2.8.0 first on tuned. 
 #
-    ${SUDO_CMD} yum -y tuned-profiles-realtime-2.8.0-5.el7_4.2 yum-plugin-versionlock | die 1 "ERROR: yum tuned-profiled-realtime-2.8.0, please check it manually."
+    ${SUDO_CMD} yum -y install tuned-profiles-realtime-2.8.0-5.el7_4.2 yum-plugin-versionlock | die 1 "ERROR: yum tuned-profiled-realtime-2.8.0, please check it manually."
     ${SUDO_CMD} yum versionlock tuned tuned-profiles-realtime | die 1 "ERROR: versionlock failed, please check it manually." 
-    ${SUDO_CMD} yum -y groupinstall RT | die 1 "ERROR: yum groupinstall RT, please check it manually."
-    ${SUDO_CMD} yum -y install kernel-rt-devel  | die 1 "ERROR: install kernel-rt-devel, please check it manually."
-
+    ${SUDO_CMD} yum -y install kernel-rt rt-setup rtcheck rtctl rteval rteval-common rteval-loads kernel-rt-devel  | die 1 "ERROR: install kernel-rt-devel, please check it manually."
+    
 }
 
 
@@ -191,12 +242,13 @@ function debian_pkgs
 
 function disable_system_service
 {
-    local disable_services=irqbalance
-    disable_services+=pcscd
+    local disable_services=$1; shift
+#    local disable_services=irqbalance
+#    disable_services+=pcscd
     
     printf "Disable service ... %s\n" "${disable_services}"
-    ${SUDO_CMD} systemctl stop ${disable_services}
-    ${SUDO_CMD} systemctl disable ${disable_services}
+    ${SUDO_CMD} systemctl stop ${disable_services}    | echo ">>> $disable_services do not exist"
+    ${SUDO_CMD} systemctl disable ${disable_services} | echo ">>> $disable_services do not exist"
 
 }
 
@@ -205,8 +257,6 @@ function boot_parameters_conf
 {
 
     local grub_cmdline_linux="$(find_existent_boot_parameter)"
-    
-    local real_time_boot_parameter="idle=poll intel_idle.max_cstate=0 processor.max_cstate=1 skew_tick=1"
     # 
     # idle=pool               : forces the TSC clock to aviod entering the idle state
     # processor.max_cstate=1  : prevents the clock from entering deeper C-states (energy saving mode), so it does not become out of sync
@@ -214,17 +264,33 @@ function boot_parameters_conf
     # skew_tick=1             : Reduce CPU performace spikes
     # * Red Hat Enterprise Linux for Real Time 7 Tuning Guide
     # * https://gist.github.com/wmealing/2dd2b543c4d3cff6cab7
-    printf "\n\n"
-    printf "Now we are adding %s in GRUB_CMDLINE_LINUX= within the file %s\n" "${real_time_boot_parameter}" "${GRUB_CONF}"
-    printf "If something goes wrong, please revert them as GRUB_CMDLINE_LINUX=\"%s\""  "${grub_cmdline_linux}"
-    printf "Please check grub~ in %s\n" "${GRUB_CONF}"
-    printf "\n\n\n\n"
+
+    local rt_boot_parameter="idle=poll intel_idle.max_cstate=0 processor.max_cstate=1 skew_tick=1"
+
+    existent_cmdline=${grub_cmdline_linux}
+    drop_cmdline_linux="${rt_boot_parameter}"
     
-    if [ -z "$grub_cmdline_linux" ]; then
-	${SUDO_CMD} ${SED} "s:^GRUB_CMDLINE_LINUX=\"\":GRUB_CMDLINE_LINUX=\"${real_time_boot_parameter}\":g" ${GRUB_CONF}
-    else
-	${SUDO_CMD} ${SED} "s:^GRUB_CMDLINE_LINUX=.*:GRUB_CMDLINE_LINUX=\"${grub_cmdline_linux} ${real_time_boot_parameter}\":g"  ${GRUB_CONF}
-    fi
+    grub_cmdline_linux=$(drop_from_path "${existent_cmdline}" "${drop_cmdline_linux}")
+
+
+    grub_cmdline_linux+=" "
+    grub_cmdline_linux+=${rt_boot_parameter}
+    new_grub_cmdline_linux=\"${grub_cmdline_linux}\"
+
+    echo ${new_grub_cmdline_linux}
+
+    printf "\n\n";
+    printf ">>>>>\n";
+    printf "     We are adding %s into GRUB_CMDLINE_LINUX in the file %s.\n" "${rt_boot_parameter}" "${GRUB_CONF}"
+    printf "     If something goes wrong, you can revert them with the backup file, e.g., grub.bk\n"
+    printf "     Please check grub.bk in the %s\n" "${GRUB_CONF%/*}/"
+    printf ">>>>>\n\n"
+
+    ${SUDO_CMD} cp -b ${GRUB_CONF} ${GRUB_CONF%/*}/grub.bk
+
+    ${SED} "s|^GRUB_CMDLINE_LINUX=.*|GRUB_CMDLINE_LINUX=${new_grub_cmdline_linux}|g" ${GRUB_CONF} | ${SUDO_CMD} tee ${GRUB_CONF}  >/dev/null
+
+
 
 }
 
@@ -262,7 +328,8 @@ case "$dist" in
 	;;
 esac
 
-#disable_system_service
+disable_system_service "pcscd"
+
 
 
 printf "\n"
