@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (c) 2018        Jeong Han Lee
+#  Copyright (c) 2018 - 2019 Jeong Han Lee
 #  Copyright (c) 2018 - 2019 European Spallation Source ERIC
 #
 #  The program is free software: you can redistribute
@@ -20,7 +20,7 @@
 # email   : jeonghan.lee@gmail.com
 # Date    : Tuesday, April 24 1354 CEST 2019
 #
-# version : 0.0.7
+# version : 0.1.0
 
 # Only aptitude can understand the extglob option
 shopt -s extglob
@@ -162,8 +162,23 @@ function yes_or_no_to_go
 }
 
 
+function centos_restore_generic_repo
+{
+    local clean_ess=$1; shift;
+    if [ "$clean_ess" = "clean" ]; then 
+	${SUDO_CMD} rm -rf /etc/yum.repos.d/{ESS-*,elastic-*,zabbix-*}
+	${SUDO_CMD} rm -rf /etc/yum.repos.d/CentOS-{Media,Vault}.repo
+	${SUDO_CMD} yum clean all
+	${SUDO_CMD} rm -rf /var/chache/yum
+	${SUDO_CMD} sed -i "s|^enabled.*|enabled=1|" /etc/yum.repos.d/*
+	${SUDO_CMD} yum update -y 
+	${SUDO_CMD} yum install -y centos-release
+    fi
+}
+
 function centos_rt_conf
 {
+
     ${SUDO_CMD} tee /etc/yum.repos.d/CentOS-rt.repo >/dev/null <<"EOF"
 #
 #
@@ -200,13 +215,15 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-cern
 EOF
 
     ${SUDO_CMD} rpm --import http://linuxsoft.cern.ch/cern/centos/7/os/x86_64/RPM-GPG-KEY-cern
-    ${SUDO_CMD} yum clean all
+ #   ${SUDO_CMD} yum clean all
     ${SUDO_CMD} yum update -y
 # Somehow linuxsoft.cern.ch and CentOS doesn't have tuned 2.9.0 version, so
 # update repo has 2.10.0, without the fixed version we cannot install RT group,
 # so, we fixed the version 2.8.0 first on tuned. 
 #
-    ${SUDO_CMD} yum -y install tuned-profiles-realtime-2.8.0-5.el7_4.2 yum-plugin-versionlock | die 1 "ERROR: yum tuned-profiled-realtime-2.8.0, please check it manually."
+    ${SUDO_CMD} yum -y remove  "tuned-*"
+    ${SUDO_CMD} yum -y install tuna yum-plugin-versionlock 
+    ${SUDO_CMD} yum -y install --disablerepo="*" --enablerepo="rt" tuned-profiles-realtime-2.8.0-5.el7_4.2 | die 1 "ERROR: yum tuned-profiled-realtime-2.8.0, please check it manually."
     ${SUDO_CMD} yum versionlock tuned tuned-profiles-realtime | die 1 "ERROR: versionlock failed, please check it manually." 
     ${SUDO_CMD} yum -y install kernel-rt rt-setup rtcheck rtctl rteval rteval-common rteval-loads kernel-rt-devel  | die 1 "ERROR: install kernel-rt-devel, please check it manually."
     
@@ -229,7 +246,7 @@ function centos_pkgs
     printf "Removing .... %s\n" ${remove_pkg_name}
     ${SUDO_CMD} yum -y remove postfix sendmail
     printf "Installing .... ethtool\n";
-    ${SUDO_CMD} yum -y install ethtool
+    ${SUDO_CMD} yum -y install ethtool yum-plugin-versionlock 
 }
 
 function debian_pkgs
@@ -315,6 +332,7 @@ case "$dist" in
 	if [ "$ANSWER" == "NO" ]; then
 	    yes_or_no_to_go "CentOS Linux 7 is detected as $dist"
 	fi
+	centos_restore_generic_repo "$1"
 	centos_pkgs;
 	centos_rt_conf;
 	boot_parameters_conf
