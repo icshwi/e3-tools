@@ -225,10 +225,10 @@ case "$dist" in
 esac
 
 
-for aservice in ${commom_services[@]}; do
-    disable_system_service $aservice
-done
-
+	for aservice in ${common_services[@]}; do
+	    disable_system_service $aservice
+	done
+	
 
 
 printf "\n"
