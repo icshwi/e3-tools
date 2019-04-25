@@ -28,6 +28,7 @@ shopt -s extglob
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
 declare -gr SC_TOP="${SC_SCRIPT%/*}"
+declare -gr SC_LOGDATE="$(date +%y%m%d%H%M)"
 
 declare -gr SUDO_CMD="sudo";
 
@@ -40,132 +41,20 @@ declare -g SED="sed"
 
 
 
-function die
-{
-    error=${1:-1}
-    ## exits with 1 if error number not given
-    shift
-    [ -n "$*" ] &&
-	printf "%s%s: %s\n" "$scriptname" ${version:+" ($version)"} "$*" >&2
-    exit "$error"
-}
+. ${SC_TOP}/.cfgs/.functions
 
-# the following function drop_from_path was copied from
-# the ROOT build system in ${ROOTSYS}/bin/, and modified
-# a little to return its result 
-# Wednesday, July 11 23:19:00 CEST 2018, jhlee 
-drop_from_path ()
-{
-    #
-    # Assert that we got enough arguments
-    if test $# -ne 2 ; then
-	echo "drop_from_path: needs 2 arguments"
-	return 1
-    fi
-
-    local p="$1"
-    local drop="$2"
-
-    local new_path=`echo "$p" | sed -e "s;:${drop}:;:;g" \
-                 -e "s;:${drop};;g"   \
-                 -e "s;${drop}:;;g"   \
-                 -e "s;${drop};;g";`
-    echo ${new_path}
-}
-
-
-set_variable ()
-{
-    if test $# -ne 2 ; then
-	echo "set_variable: needs 2 arguments"
-	return 1
-    fi
-
-    local old_path="$1"
-    local add_path="$2"
-
-    local new_path=""
-    local system_old_path=""
-
-    if [ -z "$old_path" ]; then
-	new_path=${add_path}
-    else
-	system_old_path=$(drop_from_path "${old_path}" "${add_path}")
-	if [ -z "$system_old_path" ]; then
-	    new_path=${add_path}
-	else
-	    new_path=${add_path}:${system_old_path}
-	fi
-   
-    fi
-
-    echo "${new_path}"
-    
-}
-
-
-function find_dist
-{
-
-    local dist_id dist_cn dist_rs PRETTY_NAME
-    
-    if [[ -f /usr/bin/lsb_release ]] ; then
-     	dist_id=$(lsb_release -is)
-     	dist_cn=$(lsb_release -cs)
-     	dist_rs=$(lsb_release -rs)
-     	echo "$dist_id ${dist_cn} ${dist_rs}"
-    else
-     	eval $(cat /etc/os-release | grep -E "^(PRETTY_NAME)=")
-	echo "${PRETTY_NAME}"
-    fi
- 
-}
-
-
-function find_existent_boot_parameter
-{
-
-    local GRUB_CMDLINE_LINUX
-    eval $(cat ${GRUB_CONF} | grep -E "^(GRUB_CMDLINE_LINUX)=")
-    echo "${GRUB_CMDLINE_LINUX}"
- 
-}
-
-
-function yes_or_no_to_go
-{
-
-
-    printf  "\n";
-    
-    printf  "*************** Warning!!! ***************\n";
-    printf  "*************** Warning!!! ***************\n";
-    printf  "*************** Warning!!! ***************\n";
-    printf  ">\n";
-    printf  "> You should know how to recover them if it doesn't work!\n";
-    printf  ">\n";
-     
-    printf  "> Linux RT Kernel Installation.\n"
-    printf  "> \n";
-    printf  "> $1\n";
-    read -p ">> Do you want to continue (y/N)? " answer
-    case ${answer:0:1} in
-	y|Y )
-	    printf ">> The following kernel will be installed ......\n ";
-	    ;;
-	* )
-            printf ">> Stop here.\n";
-	    exit;
-	    ;;
-    esac
-
-}
 
 
 function centos_restore_generic_repo
 {
     local clean_ess=$1; shift;
-    if [ "$clean_ess" = "clean" ]; then 
+    local bservice="";
+    if [ "$clean_ess" = "clean" ]; then
+	
+	for bservice in ${essvm_services[@]}; do
+	    disable_system_service $bservice
+	done
+	
 	${SUDO_CMD} rm -rf /etc/yum.repos.d/{ESS-*,elastic-*,zabbix-*}
 	${SUDO_CMD} rm -rf /etc/yum.repos.d/CentOS-{Media,Vault}.repo
 	${SUDO_CMD} yum clean all
@@ -175,6 +64,7 @@ function centos_restore_generic_repo
 	${SUDO_CMD} yum install -y centos-release
     fi
 }
+
 
 function centos_rt_conf
 {
@@ -259,18 +149,6 @@ function debian_pkgs
     ${SUDO_CMD} apt install -y aptitude ethtool
 }
 
-function disable_system_service
-{
-    local disable_services=$1; shift
-#    local disable_services=irqbalance
-#    disable_services+=pcscd
-    
-    printf "Disable service ... %s\n" "${disable_services}"
-    ${SUDO_CMD} systemctl stop ${disable_services}    | echo ">>> $disable_services do not exist"
-    ${SUDO_CMD} systemctl disable ${disable_services} | echo ">>> $disable_services do not exist"
-
-}
-
 
 function boot_parameters_conf
 {
@@ -313,8 +191,6 @@ function boot_parameters_conf
 
 }
 
-
-
 ANSWER="NO"
 
 dist=$(find_dist)
@@ -348,7 +224,10 @@ case "$dist" in
 	;;
 esac
 
-disable_system_service "pcscd"
+
+for aservice in ${commom_services[@]}; do
+    disable_system_service $aservice
+done
 
 
 
