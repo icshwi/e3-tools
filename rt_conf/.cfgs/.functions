@@ -161,7 +161,7 @@ function disable_system_service
 
 
 
-common_services="$(get_confodule_list ${SC_TOP}/.SYSTEMD_SERVICES_COMMON)"
+common_services="$(get_conf_list ${SC_TOP}/.SYSTEMD_SERVICES_COMMON)"
 essvm_services="$(get_conf_list ${SC_TOP}/.SYSTEMD_SERVICES_ESSVM)"
 
 
