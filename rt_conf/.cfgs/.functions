@@ -1,5 +1,24 @@
 #!/bin/bash
-
+#  Copyright (c) 2018 - 2019 Jeong Han Lee
+#  Copyright (c) 2018 - 2019 European Spallation Source ERIC
+#
+#  The program is free software: you can redistribute
+#  it and/or modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation, either version 2 of the
+#  License, or any newer version.
+#
+#  This program is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+#  more details.
+#
+#  You should have received a copy of the GNU General Public License along with
+#  this program. If not, see https://www.gnu.org/licenses/gpl-2.0.txt
+#
+# Author  : Jeong Han Lee
+# email   : jeonghan.lee@gmail.com
+# Date    : Thursday, April 25 18:05:06 CEST 2019
+#
 
 function get_conf_list
 {
@@ -143,22 +162,16 @@ function yes_or_no_to_go
 }
 
 
-
 function disable_system_service
 {
     local disable_services=$1; shift
-#    local disable_services=irqbalance
-#    disable_services+=pcscd
     
     printf "Disable service ... %s\n" "${disable_services}"
-    ${SUDO_CMD} systemctl stop    ${disable_services}    | echo ">>> $disable_services do not exist"
-    ${SUDO_CMD} systemctl disable ${disable_services} | echo ">>> $disable_services do not exist"
-    ${SUDO_CMD} systemctl mask    ${disable_services} | echo ">>> $disable_services do not exist"
-
+    ${SUDO_CMD} systemctl stop    ${disable_services} | echo ">>> Stop    : $disable_services do not exist"
+    ${SUDO_CMD} systemctl disable ${disable_services} | echo ">>> Disalbe : $disable_services do not exist"
+    ${SUDO_CMD} systemctl mask    ${disable_services} | echo ">>> Mask    : $disable_services do not exist"
 
 }
-
-
 
 
 common_services="$(get_conf_list ${SC_TOP}/.SYSTEMD_SERVICES_COMMON)"
