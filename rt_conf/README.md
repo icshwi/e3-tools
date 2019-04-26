@@ -83,6 +83,11 @@ $ reboot
 
 Disable Power Saving and other features.
 
+## irqbalance
+
+At the baseline of the configuration, we would like to use the irqbalance with Linux PREEMPT RT kernel. Note that one should check its status via `systemctl status irqbalance` after rebooting with RT kernel. 
+
+
 # References
 
 [1] http://linux.web.cern.ch/linux/centos7/  
