@@ -22,7 +22,7 @@ source ~/.git-completion.bash
 
 
 case "$TERM" in
-xterm*|rxvt*)
+xterm*|rxvt*|screen*)
     PS1='\u@\h: \W$(__git_ps1 " (%s)")\$ '
     ;;
 *)
