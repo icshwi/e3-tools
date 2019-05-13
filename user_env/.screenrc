@@ -2,8 +2,8 @@
 #
 #  Author  : Jeong Han Lee
 #  email   : han.lee@esss.se
-#  Date    : 2017-03-18
-#  version : 0.0.2
+#  Date    : Monday, May 13 21:52:05 CEST 2019
+#  version : 0.0.3
 
 startup_message         off
 vbell                   off
@@ -14,15 +14,11 @@ defscrollback 1000000
 autodetach on
 hardstatus alwayslastline '%{= M} %H%{= G} %l %= %{= w}%-w%{+b r}%n*%t%{-b r}%{w}%+w %= %{c} %Y/%M/%d %{B}%c '
 
-# add CPU idle/sustem/user/interrupt stats
-#backtick 100 5 5 tail -1 /var/tmp/mprem.stats.top
+bind c stuff "screen bash^M"
 caption always '%{= wk} %200` %= %100` %='
 
 # Fix stupid screen overwriting
 altscreen on
-#logfile $HOME/$HOST.screen.log
-#logtstamp on
-#logtstamp after 30
 
 chdir $HOME
 screen -fn -t "$HOST-$HOME" 
