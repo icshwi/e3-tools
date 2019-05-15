@@ -8,3 +8,5 @@ index.html
 *toolchain-*.sh
 cc_setup/toolchain/
 cc_setup/toolchain_*/
+rt_conf/ltp/
+rt_conf/rt-tests/

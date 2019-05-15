@@ -18,9 +18,9 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Thursday, April 25 00:07:56 CEST 2019
+# Date    : Thursday, May 16 00:03:33 CEST 2019
 #
-# version : 0.1.0
+# version : 0.1.1
 
 # Only aptitude can understand the extglob option
 shopt -s extglob
@@ -146,9 +146,24 @@ function debian_pkgs
     printf "Removing .... %s\n" ${remove_pkg_name}
     ${SUDO_CMD} apt remove -y postfix sendmail cups
     printf "Installing .... ethtool\n";
-    ${SUDO_CMD} apt install -y aptitude ethtool
+    ${SUDO_CMD} apt install -y aptitude ethtool libnuma-dev 
 }
 
+
+function create_realtime_group
+{
+    # check realtime group
+    # if not, create
+    # add the realtime configuration
+    # ...
+}
+
+
+# CentOS has the default realtime group, not Debian
+function add_user_rtgroup
+{
+    ${SUDO_CMD} usermod -aG realtime $USER
+}
 
 function boot_parameters_conf
 {
@@ -212,6 +227,7 @@ case "$dist" in
 	centos_restore_generic_repo "$1"
 	centos_pkgs;
 	centos_rt_conf;
+	add_user_rtgroup;
 	boot_parameters_conf
 	${SUDO_CMD} grub2-mkconfig –o /boot/grub2/grub.cfg
 	;;
@@ -228,7 +244,6 @@ esac
 for aservice in ${common_services[@]}; do
     disable_system_service $aservice
 done
-
 
 
 printf "\n"
