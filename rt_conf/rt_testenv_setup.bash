@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 #  Copyright (c) 2019        Jeong Han Lee
+#  Copyright (c) 2019        European Spallation Source ERIC
 #
 #  The program is free software: you can redistribute
 #  it and/or modify it under the terms of the GNU General Public License
@@ -19,7 +20,7 @@
 # email   : jeonghan.lee@gmail.com
 # Date    : Wednesday, May 15 23:33:14 CEST 2019
 #
-# version : 0.0.1
+# version : 0.0.2
 
 # Only aptitude can understand the extglob option
 shopt -s extglob
@@ -62,7 +63,7 @@ function setup_rt_tests
     pushd rt-tests
     git checkout stable/v1.0
     make all -s 
-    sudo make install
+#    sudo make install
     popd
 }
 
