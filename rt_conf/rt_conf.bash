@@ -18,9 +18,9 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Thursday, May 16 00:03:33 CEST 2019
+# Date    : Thursday, May 16 11:18:37 CEST 2019
 #
-# version : 0.1.1
+# version : 0.1.2
 
 # Only aptitude can understand the extglob option
 shopt -s extglob
@@ -137,7 +137,7 @@ function centos_pkgs
     printf "Removing .... %s\n" ${remove_pkg_name}
     ${SUDO_CMD} yum -y remove postfix sendmail cups
     printf "Installing .... ethtool\n";
-    ${SUDO_CMD} yum -y install ethtool
+    ${SUDO_CMD} yum -y install ethtool numactl-devel
 }
 
 function debian_pkgs
