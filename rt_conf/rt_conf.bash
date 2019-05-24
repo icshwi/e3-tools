@@ -150,13 +150,13 @@ function debian_pkgs
 }
 
 
-function create_realtime_group
-{
+#function create_realtime_group
+#{
     # check realtime group
     # if not, create
     # add the realtime configuration
     # ...
-}
+#}
 
 
 # CentOS has the default realtime group, not Debian
