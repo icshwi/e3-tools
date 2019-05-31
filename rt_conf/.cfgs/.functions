@@ -25,6 +25,24 @@ function pushd { builtin pushd "$@" > /dev/null; }
 function popd  { builtin popd  "$@" > /dev/null; }
 
 
+function create_group
+{
+    local group=$1;shift;
+    # groupadd -f returns OK if the group exists
+    ${SUDO_CMD} groupadd -f $group
+}
+
+
+function add_user_to_group
+{
+    local user=$1; shift;
+    local group=$1; shift;
+    ${SUDO_CMD} usermod -aG $group $user
+}
+
+
+
+
 function get_conf_list
 {
     local empty_string="";

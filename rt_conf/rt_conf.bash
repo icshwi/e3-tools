@@ -18,9 +18,9 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Thursday, May 16 11:18:37 CEST 2019
+# Date    : Friday, May 31 13:53:47 CEST 2019
 #
-# version : 0.1.2
+# version : 0.1.3
 
 # Only aptitude can understand the extglob option
 shopt -s extglob
@@ -30,8 +30,8 @@ declare -gr SC_SCRIPTNAME=${0##*/}
 declare -gr SC_TOP="${SC_SCRIPT%/*}"
 declare -gr SC_LOGDATE="$(date +%y%m%d%H%M)"
 
-declare -gr SUDO_CMD="sudo";
-
+declare -gr SUDO_CMD=$(which sudo);
+  
 declare -g KERNEL_VER=$(uname -r)
 
 declare -g GRUB_CONF=/etc/default/grub
@@ -121,13 +121,30 @@ EOF
 }
 
 
+function add_realtime_debian
+{
+    local user="$1"; shift;
+    create_group "realtime";
+    add_user_to_group "$user" "realtime";
+}
+
+
+
 function debian_rt_conf
 {
     # apt, apt-get cannot handle extglob, so aptitude
     # in order to exclude -dbg kernel image. However, aptitude install
-    # doesn't understand extglob, only search can do. 
+    # doesn't understand extglob, only search can do.
+
+    local user=$(whoami);
     rt_image=$(aptitude search linux-image-rt!(dbg) | awk '{print $2}')
     ${SUDO_CMD} apt install -y linux-headers-rt* ${rt_image}
+    #
+    # create the realtime group and add the current user to realtime group
+    #
+    add_realtime_debian $user;
+
+    ${SUDO_CMD} install -m 644 ${SC_TOP}/conf/realtime.conf /etc/security/limits.d/
     
 }
 
@@ -150,20 +167,6 @@ function debian_pkgs
 }
 
 
-#function create_realtime_group
-#{
-    # check realtime group
-    # if not, create
-    # add the realtime configuration
-    # ...
-#}
-
-
-# CentOS has the default realtime group, not Debian
-function add_user_rtgroup
-{
-    ${SUDO_CMD} usermod -aG realtime $USER
-}
 
 function boot_parameters_conf
 {
