@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #  Copyright (c) 2018 - Present Jeong Han Lee
-#  Copyright (c) 2018 - Present European Spallation Source ERIC
+#  Copyright (c) 2018 - 2019    European Spallation Source ERIC
 #
 #  The program is free software: you can redistribute
 #  it and/or modify it under the terms of the GNU General Public License
@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Thursday, January 10 16:02:51 CET 2019
-#   version : 0.7.7
+#   date    : Monday, June  3 11:51:51 CEST 2019
+#   version : 0.8.0
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -35,9 +35,9 @@ declare -g  UPDATE_LOG=".UPDATE_MODULE_LOG";
 declare -g  E3_MODULE_DEST=""
 
 declare -gr _E3_EPICS_PATH=/epics
-declare -gr _E3_BASE_VERSION=3.15.5
+declare -gr _E3_BASE_VERSION=3.15.6
 declare -gr _E3_REQUIRE_NAME=require
-declare -gr _E3_REQUIRE_VERSION=3.0.4
+declare -gr _E3_REQUIRE_VERSION=3.1.0
 declare -gr _EPICS_BASE=${_E3_EPICS_PATH}/base-${_E3_BASE_VERSION}
 
 declare -g  _EPICS_MODULE_NAME=""
@@ -63,9 +63,9 @@ function usage
 	echo "";
 	echo "Usage    : $0 [-m <module_configuraton_file>] [-d <module_destination_path>]" ;
 	echo "";
-	echo "               -m : a module configuration file, please check ${SC_TOP}/modules_conf path"
+	echo "               -m : a module configuration file, please check ${SC_TOP}/modules_conf"
 	echo "               -d : a destination, optional, Default \$PWD : ${SC_TOP} "
-	echo "               -t : an existent module path for updating configuration files";
+	echo "               -u : an existent module path for updating configuration files";
 	echo "";
 	echo "Examples in modules_conf  : ";
 	echo "";
