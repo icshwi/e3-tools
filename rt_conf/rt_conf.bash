@@ -18,9 +18,9 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Friday, May 31 13:53:47 CEST 2019
+# Date    : Monday, June 10 23:22:40 CEST 2019
 #
-# version : 0.1.3
+# version : 0.1.4
 
 # Only aptitude can understand the extglob option
 shopt -s extglob
@@ -68,7 +68,8 @@ function centos_restore_generic_repo
 
 function centos_rt_conf
 {
-
+    local user=$(whoami);
+    
     ${SUDO_CMD} tee /etc/yum.repos.d/CentOS-rt.repo >/dev/null <<"EOF"
 #
 #
@@ -107,17 +108,20 @@ EOF
     ${SUDO_CMD} rpm --import http://linuxsoft.cern.ch/cern/centos/7/os/x86_64/RPM-GPG-KEY-cern
  
     ${SUDO_CMD} yum update -y
-#
-# Somehow linuxsoft.cern.ch and CentOS doesn't have tuned 2.9.0 version, so
-# update repo has 2.10.0, without the fixed version we cannot install RT group,
-# so, we fixed the version 2.8.0 first on tuned. 
-#
+    #
+    # Somehow linuxsoft.cern.ch and CentOS doesn't have tuned 2.9.0 version, so
+    # update repo has 2.10.0, without the fixed version we cannot install RT group,
+    # so, we fixed the version 2.8.0 first on tuned. 
+    #
     ${SUDO_CMD} yum -y remove  "tuned-*"
     ${SUDO_CMD} yum -y install tuna yum-plugin-versionlock 
     ${SUDO_CMD} yum -y install --disablerepo="*" --enablerepo="rt" tuned-profiles-realtime-2.8.0-5.el7_4.2
     ${SUDO_CMD} yum versionlock tuned tuned-profiles-realtime
-    ${SUDO_CMD} yum -y install kernel-rt rt-setup rtcheck rtctl rteval rteval-common rteval-loads kernel-rt-devel 
-    
+    ${SUDO_CMD} yum -y install kernel-rt rt-setup rtcheck rtctl rteval rteval-common rteval-loads kernel-rt-devel
+
+    # After the rt configuration, CentOS has 'realtime' group.
+    # We need to only add the current user to the realtime group.
+    add_user_to_group "$user" "realtime";
 }
 
 
