@@ -36,6 +36,7 @@ install:
   - echo "E3_REQUIRE_VERSION:=${REQUIRE}"     >> RELEASE.local
   - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteApps-template-genesysGEN5kWPS.conf
   - pushd e3-genesysGEN5kWPS
+  - scp ${TRAVIS_BUILD_DIR}/.ci/genesysGEN5kWPS.Makefile .
   - make vars
   - make init
   - make build
