@@ -1,0 +1,20 @@
+EPICS_MODULE_NAME:=devlib2
+#
+EPICS_MODULE_TAG:=tags/2.9
+#
+E3_MODULE_VERSION:=2.9.0
+#
+E3_MODULE_NAME:=$(EPICS_MODULE_NAME)
+#
+E3_MODULE_SRC_PATH:=$(EPICS_MODULE_NAME)
+#
+E3_MODULE_MAKEFILE:=$(EPICS_MODULE_NAME).Makefile
+#
+-include $(TOP)/configure/CONFIG_OPTIONS
+# The definitions shown below can also be placed in an untracked CONFIG_MODULE*.local
+-include $(TOP)/configure/CONFIG_MODULE.local
+#
+-include $(TOP)/configure/CONFIG_OPTIONS
+# The definitions shown below can also be placed in an untracked CONFIG_MODULE*.local
+-include $(TOP)/configure/CONFIG_MODULE.local
+#
