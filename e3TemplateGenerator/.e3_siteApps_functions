@@ -1,0 +1,326 @@
+#!/bin/bash
+#
+#  Copyright (c) 2018 - 2019    Jeong Han Lee
+#  Copyright (c) 2018 - 2019    European Spallation Source ERIC
+#
+#  The program is free software: you can redistribute
+#  it and/or modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation, either version 2 of the
+#  License, or any newer version.
+#
+#  This program is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+#  more details.
+#
+#  You should have received a copy of the GNU General Public License along with
+#  this program. If not, see https://www.gnu.org/licenses/gpl-2.0.txt
+#
+#
+#   author  : Jeong Han Lee
+#   email   : jeonghan.lee@gmail.com
+#   date    : Monday, August  5 10:57:19 CEST 2019
+#   version : 1.0.0
+
+
+function add_readme_siteApps
+{
+    cat > README.md <<EOF
+
+${_E3_MOD_NAME}  
+======
+ESS Site-specific EPICS IOC Application : ${_EPICS_MODULE_NAME}
+
+EOF
+
+}
+
+#
+function add_CONFIG_siteApps
+{
+    cat > CONFIG <<"EOF"
+#
+VARS_EXCLUDES := $(.VARIABLES)
+
+ifneq (,$(findstring dev,$(MAKECMDGOALS)))
+include $(TOP)/configure/RELEASE_DEV
+else
+include $(TOP)/configure/RELEASE
+endif
+
+ifneq (,$(findstring dev,$(MAKECMDGOALS)))
+include $(TOP)/configure/CONFIG_MODULE_DEV
+else
+include $(TOP)/configure/CONFIG_MODULE
+endif
+
+-include $(TOP)/configure/CONFIG_SITE_SYSTEMAPPS
+
+E3_REQUIRE_LOCATION := $(EPICS_BASE)/$(E3_REQUIRE_NAME)/$(E3_REQUIRE_VERSION)
+REQUIRE_CONFIG := $(E3_REQUIRE_LOCATION)/configure
+E3_MODULES_PATH ?= $(E3_REQUIRE_LOCATION)/siteApps
+
+include $(REQUIRE_CONFIG)/CONFIG
+
+EOF
+}
+
+#
+function add_CONFIG_siteApps_local
+{
+    cat > CONFIG <<"EOF"
+#
+VARS_EXCLUDES := $(.VARIABLES)
+
+include $(TOP)/configure/RELEASE
+include $(TOP)/configure/CONFIG_MODULE
+
+-include $(TOP)/configure/CONFIG_SITE_SYSTEMAPPS
+
+E3_REQUIRE_LOCATION := $(EPICS_BASE)/$(E3_REQUIRE_NAME)/$(E3_REQUIRE_VERSION)
+REQUIRE_CONFIG := $(E3_REQUIRE_LOCATION)/configure
+E3_MODULES_PATH ?= $(E3_REQUIRE_LOCATION)/siteApps
+
+include $(REQUIRE_CONFIG)/CONFIG
+
+EOF
+    
+}
+
+#
+function add_CONFIG_MODULE_siteApps
+{
+
+       cat > CONFIG_MODULE <<EOF
+#
+EPICS_MODULE_NAME:=${_EPICS_MODULE_NAME}
+
+EPICS_MODULE_TAG:=master
+#
+E3_MODULE_VERSION:=master
+
+# DEPENDENT MODULE VERSION
+# For Example, 
+#DEVLIB2_DEP_VERSION:=2.9.0
+#ASYN_DEP_VERSION:=4.33.0
+#PCRE_DEP_VERSION:=8.41.
+#ADCORE_DEP_VERSION:=3.3.2
+#ADSUPPORT_DEP_VERSION:=1.4.0
+#LOKI_DEP_VERSION=1.0.0
+#NDS_DEP_VERSION=2.3.3
+#SIS8300DRV_DEP_VERSION=4.3.1
+#SEQUENCER_DEP_VERSION=2.2.6
+#
+# 
+#E3_KMOD_SRC_PATH:=\$(E3_MODULE_SRC_PATH)
+#
+# In most case, we don't need to touch the following variables.
+#
+
+E3_MODULE_NAME:=\$(EPICS_MODULE_NAME)
+E3_MODULE_SRC_PATH:=${_E3_MODULE_SRC_PATH}
+E3_MODULE_MAKEFILE:=\$(EPICS_MODULE_NAME).Makefile
+
+
+-include \$(TOP)/configure/CONFIG_OPTIONS
+# The definitions shown below can also be placed in an untracked CONFIG_MODULE.local
+-include \$(TOP)/configure/CONFIG_MODULE.local
+
+EOF
+}
+
+#
+function add_CONFIG_MODULE_DEV_siteApps
+{
+
+    cat > CONFIG_MODULE_DEV <<EOF
+#
+EPICS_MODULE_NAME:=${_EPICS_MODULE_NAME}
+EPICS_MODULE_TAG:=master
+#
+E3_MODULE_VERSION:=develop
+
+# DEPENDENT MODULE VERSION
+# DEPENDENT MODULE VERSION
+# For Example, 
+#DEVLIB2_DEP_VERSION:=2.9.0
+#ASYN_DEP_VERSION:=4.33.0
+#PCRE_DEP_VERSION:=8.41.0
+#ADCORE_DEP_VERSION:=3.3.2
+#ADSUPPORT_DEP_VERSION:=1.4.0
+#LOKI_DEP_VERSION=1.0.0
+#NDS_DEP_VERSION=2.3.3
+#SIS8300DRV_DEP_VERSION=4.3.1
+#SEQUENCER_DEP_VERSION=2.2.6
+#
+#
+# 
+#E3_KMOD_SRC_PATH:=\$(E3_MODULE_SRC_PATH)
+#
+# In most case, we don't need to touch the following variables.
+#
+
+E3_MODULE_NAME:=\$(EPICS_MODULE_NAME)
+E3_MODULE_SRC_PATH:=${_E3_MODULE_SRC_PATH}-dev
+E3_MODULE_MAKEFILE:=\$(EPICS_MODULE_NAME).Makefile
+
+#E3_MODULE_DEV_GITURL:="https://where your git repo which you would like to clone"
+E3_MODULE_DEV_GITURL:="${_E3_MODULE_GITURL_FULL}"
+
+# The definitions shown below can also be placed in an untracked CONFIG_MODULE_DEV.local
+-include \$(TOP)/configure/CONFIG_MODULE_DEV.local
+
+EOF
+}
+
+#
+function add_RULES_siteApps
+{
+    cat > RULES <<"EOF"
+
+include $(REQUIRE_CONFIG)/RULES_SITEAPPS
+#include $(REQUIRE_CONFIG)/RULES_EPICS
+
+include $(TOP)/configure/module/RULES_MODULE
+-include $(TOP)/configure/module/RULES_DKMS_L
+
+EOF
+}
+
+
+function add_RULES_siteApps_local
+{
+    cat > RULES <<"EOF"
+
+include $(REQUIRE_CONFIG)/RULES_E3
+include $(REQUIRE_CONFIG)/DEFINES_FT
+include $(REQUIRE_CONFIG)/RULES_PATCH
+include $(REQUIRE_CONFIG)/RULES_E3_SITEAPPS
+
+include $(REQUIRE_CONFIG)/RULES_VLIBS
+include $(REQUIRE_CONFIG)/RULES_VARS
+
+include $(TOP)/configure/module/RULES_MODULE
+-include $(TOP)/configure/module/RULES_DKMS_L
+
+EOF
+}
+
+
+# SYSTEMAPPS are valid for siteApps
+function add_CONFIG_SITE_SYSTEMAPPS
+{
+    cat > CONFIG_SITE_SYSTEMAPPS <<"EOF"
+
+#E3_MODULES_PATH = /siteApps/icsApps
+#E3_MODULES_PATH = /siteApps/accApps
+#E3_MODULES_PATH = /siteApps/cfApps
+#E3_MODULES_PATH = /siteApps/tgtApps
+#E3_MODULES_PATH = /siteApps/expApps
+#E3_MODULES_PATH = /siteApps/exp16Apps
+
+
+-include $(TOP)/../CONFIG_SITE_SYSTEMAPPS.local
+-include $(TOP)/CONFIG_SITE_SYSTEMAPPS.local
+-include $(TOP)/configure/CONFIG_SITE_SYSTEMAPPS.local
+
+EOF
+    
+}
+
+
+function add_CONFIG_MODULE_siteApps_localexample
+{
+
+       cat > CONFIG_MODULE <<EOF
+#
+EPICS_MODULE_NAME:=${_EPICS_MODULE_NAME}
+
+EPICS_MODULE_TAG:=master
+#
+E3_MODULE_VERSION:=master
+
+# DEPENDENT MODULE VERSION
+# For Example, 
+#DEVLIB2_DEP_VERSION:=2.9.0
+#ASYN_DEP_VERSION:=4.33.0
+#PCRE_DEP_VERSION:=8.41.
+#ADCORE_DEP_VERSION:=3.3.2
+#ADSUPPORT_DEP_VERSION:=1.4.0
+#LOKI_DEP_VERSION=1.0.0
+#NDS_DEP_VERSION=2.3.3
+#SIS8300DRV_DEP_VERSION=4.3.1
+SEQUENCER_DEP_VERSION=2.2.6
+#
+# 
+#E3_KMOD_SRC_PATH:=\$(E3_MODULE_SRC_PATH)
+#
+# In most case, we don't need to touch the following variables.
+#
+
+E3_MODULE_NAME:=\$(EPICS_MODULE_NAME)
+E3_MODULE_SRC_PATH:=${_E3_MODULE_SRC_PATH}
+E3_MODULE_MAKEFILE:=\$(EPICS_MODULE_NAME).Makefile
+
+
+-include \$(TOP)/configure/CONFIG_OPTIONS
+# The definitions shown below can also be placed in an untracked CONFIG_MODULE.local
+-include \$(TOP)/configure/CONFIG_MODULE.local
+
+EOF
+}
+
+
+
+function add_configure_siteApps
+{
+    # .e3_siteApps_functions
+    add_CONFIG_siteApps            ||  die 1 "We cannot do add_CONFIG_sitAppps        : please check it";
+    add_CONFIG_SITE_SYSTEMAPPS     ||  die 1 "We cannot do add_CONFIG_SITE_SYSTEMAPPS : please check it";
+    # .e3_common_functions
+    add_RELEASE                    ||  die 1 "We cannot do add_RELEASE         : please check it";
+    add_RELEASE_DEV                ||  die 1 "We cannot do add_RELEASE_DEV     : please check it";
+    # .e3_siteApps_functions
+    add_CONFIG_MODULE_siteApps     ||  die 1 "We cannot do add_CONFIG_MODULE_siteApps     : please check it";
+    add_CONFIG_MODULE_DEV_siteApps ||  die 1 "We cannot do add_CONFIG_MODULE_DEV_siteApps : please check it";
+    add_RULES_siteApps             ||  die 1 "We cannot do add_RULES_siteApps : please check it";
+    # .e3_common_functions
+    add_CONFIG_OPTIONS             ||  die 1 "We cannot do add_CONFIG_OPTIONS : please check it";
+}
+
+
+#
+# We don't need the development mode, because all source files are located in *-loc path
+#
+function add_configure_siteApps_local
+{
+    # .e3_siteApps_functions
+    add_CONFIG_siteApps_local     ||  die 1 "We cannot do add_CONFIG_sitAppps_local  : please check it";
+    add_CONFIG_SITE_SYSTEMAPPS    ||  die 1 "We cannot do add_CONFIG_SITE_SYSTEMAPPS : please check it";
+    # .e3_common_functions
+    add_RELEASE                   ||  die 1 "We cannot do add_RELEASE         : please check it";
+    # .e3_siteApps_functions
+    add_CONFIG_MODULE_siteApps    ||  die 1 "We cannot do add_CONFIG_MODULE_siteApps     : please check it";
+    add_RULES_siteApps_local      ||  die 1 "We cannot do add_RULES_siteApps_local : please check it";
+    # .e3_common_functions
+    add_CONFIG_OPTIONS            ||  die 1 "We cannot do add_CONFIG_OPTIONS : please check it";
+}
+
+
+#
+# We don't need the development mode, because all source files are located in *-loc path
+#
+function add_configure_siteApps_localexample
+{
+    # .e3_siteApps_functions
+    add_CONFIG_siteApps_local     ||  die 1 "We cannot do add_CONFIG_sitAppps_local  : please check it";
+    add_CONFIG_SITE_SYSTEMAPPS    ||  die 1 "We cannot do add_CONFIG_SITE_SYSTEMAPPS : please check it";
+    # .e3_common_functions
+    add_RELEASE                   ||  die 1 "We cannot do add_RELEASE         : please check it";
+    # .e3_siteApps_functions
+    add_CONFIG_MODULE_siteApps_localexample  ||  die 1 "We cannot do add_CONFIG_MODULE_siteApps_localexample    : please check it";
+    add_RULES_siteApps_local      ||  die 1 "We cannot do add_RULES_siteApps_local : please check it";
+    # .e3_common_functions
+    add_CONFIG_OPTIONS            ||  die 1 "We cannot do add_CONFIG_OPTIONS : please check it";
+}
+

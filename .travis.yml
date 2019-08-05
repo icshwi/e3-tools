@@ -18,6 +18,7 @@ env:
     - BASE=7.0.3
     - TAG=7.0.3
     - REQUIRE=3.1.0
+
     
     
     
@@ -30,4 +31,28 @@ before_install:
   - bash .ci/prepare_e3.bash
 
 install:
+  - pushd e3TemplateGenerator
+  - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteApps-template-genesysGEN5kWPS.conf
+  - pushd e3-genesysGEN5kWPS
+  - make vars
+  - make init
+  - make build
+  - make install
+  - make existent LEVEL=4
+  - popd
+  - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteApps-template-localexample.conf
+  - pushd e3-example
+  - make vars
+  - make build
+  - make install
+  - make existent LEVEL=4
+  - popd
+  - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteMods-template-MCoreUtils.conf
+  - pushd  e3-MCoreUtils
+  - make vars
+  - make init
+  - make build
+  - make install
+  - make existent LEVEL=4
+  - popd
 

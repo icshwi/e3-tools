@@ -1,0 +1,468 @@
+#!/bin/bash
+#
+#  Copyright (c) 2018 - 2019    Jeong Han Lee
+#  Copyright (c) 2018 - 2019    European Spallation Source ERIC
+#
+#  The program is free software: you can redistribute
+#  it and/or modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation, either version 2 of the
+#  License, or any newer version.
+#
+#  This program is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+#  more details.
+#
+#  You should have received a copy of the GNU General Public License along with
+#  this program. If not, see https://www.gnu.org/licenses/gpl-2.0.txt
+#
+#
+#   author  : Jeong Han Lee
+#   email   : jeonghan.lee@gmail.com
+#   date    : Monday, June  3 16:57:14 CEST 2019
+#   version : 0.2.0
+
+
+function addExampleSrc
+{
+    local DEST=${1}
+    cat > ${DEST}/sncExample.stt <<"EOF"
+program sncExample
+double v;
+assign v to "{user}:aiExample";
+monitor v;
+
+ss ss1 {
+    state init {
+        when (delay(10)) {
+            printf("sncExample: Startup delay over\n");
+        } state low
+    }
+    state low {
+        when (v > 5.0) {
+            printf("sncExample: Changing to high\n");
+        } state high
+    }
+    state high {
+        when (v <= 5.0) {
+            printf("sncExample: Changing to low\n");
+        } state low
+    }
+}
+
+EOF
+    cat > ${DEST}/sncExample.dbd <<"EOF"
+registrar(sncExampleRegistrar)
+EOF
+
+
+    cat > ${DEST}/dbSubExample.c <<"EOF"
+#include <stdio.h>
+
+#include <dbDefs.h>
+#include <registryFunction.h>
+#include <subRecord.h>
+#include <aSubRecord.h>
+#include <epicsExport.h>
+
+int mySubDebug;
+
+static long mySubInit(subRecord *precord)
+{
+    if (mySubDebug)
+        printf("Record %s called mySubInit(%p)\n",
+               precord->name, (void*) precord);
+    return 0;
+}
+
+static long mySubProcess(subRecord *precord)
+{
+    if (mySubDebug)
+        printf("Record %s called mySubProcess(%p)\n",
+               precord->name, (void*) precord);
+    return 0;
+}
+
+static long myAsubInit(aSubRecord *precord)
+{
+    if (mySubDebug)
+        printf("Record %s called myAsubInit(%p)\n",
+               precord->name, (void*) precord);
+    return 0;
+}
+
+static long myAsubProcess(aSubRecord *precord)
+{
+    if (mySubDebug)
+        printf("Record %s called myAsubProcess(%p)\n",
+               precord->name, (void*) precord);
+    return 0;
+}
+
+/* Register these symbols for use by IOC code: */
+
+epicsExportAddress(int, mySubDebug);
+epicsRegisterFunction(mySubInit);
+epicsRegisterFunction(mySubProcess);
+epicsRegisterFunction(myAsubInit);
+epicsRegisterFunction(myAsubProcess);
+
+EOF
+
+    cat > ${DEST}/dbSubExample.dbd <<"EOF"
+variable(mySubDebug)
+function(mySubInit)
+function(mySubProcess)
+function(myAsubInit)
+function(myAsubProcess)
+
+EOF
+    
+    cat > ${DEST}/myexampleHello.c <<"EOF"
+/* Example showing how to register a new command with iocsh */
+
+#include <stdio.h>
+
+#include <epicsExport.h>
+#include <iocsh.h>
+
+/* This is the command, which the vxWorks shell will call directly */
+void hello(const char *name) {
+    if (name) {
+        printf("Hello %s, from myexample\n", name);
+    } else {
+        puts("Hello from myexample");
+    }
+}
+
+/* Information needed by iocsh */
+static const iocshArg     helloArg0 = {"name", iocshArgString};
+static const iocshArg    *helloArgs[] = {&helloArg0};
+static const iocshFuncDef helloFuncDef = {"hello", 1, helloArgs};
+
+/* Wrapper called by iocsh, selects the argument types that hello needs */
+static void helloCallFunc(const iocshArgBuf *args) {
+    hello(args[0].sval);
+}
+
+/* Registration routine, runs at startup */
+static void helloRegister(void) {
+    iocshRegister(&helloFuncDef, helloCallFunc);
+}
+epicsExportRegistrar(helloRegister);
+
+EOF
+
+ cat > ${DEST}/myexampleHello.dbd <<"EOF"
+registrar(helloRegister)
+EOF
+    
+    
+}
+
+function addExampleCmds
+{
+    local DEST=${1}
+    cat > ${DEST}/example.cmd <<EOF
+#var requireDebug 1
+require sequencer,2.1.21
+require ${_EPICS_MODULE_NAME},master
+#require iocStats,ae5d083
+#require recsync,1.3.0
+#require autosave,5.9.0
+#require MCoreUtils,1.2.1
+
+
+epicsEnvSet(TOP, "\$(E3_CMD_TOP)")
+epicsEnvSet("IOCNAME", "example")
+
+dbLoadRecords("dbExample1.db" "user=\$(IOCNAME)")
+dbLoadRecords("dbExample2.db" "user=\$(IOCNAME), no=1, scan=1 second")
+dbLoadRecords("dbExample2.db" "user=\$(IOCNAME), no=2, scan=2 second")
+dbLoadRecords("dbExample2.db" "user=\$(IOCNAME), no=3, scan=5 second")
+
+dbLoadRecords("dbSubExample.db", "user=\$(IOCNAME)")
+
+# need to define IOCNAME
+# PV names
+#loadIocsh("iocStats.iocsh", "IOCNAME=\$(IOCNAME)")
+#loadIocsh("recsync.iocsh",  "IOCNAME=\$(IOCNAME)")
+#loadIocsh("autosave.iocsh", "IOCNAME=\$(IOCNAME), AS_TOP=\$(TOP)")
+
+
+iocInit()
+
+## Start any sequence programs
+seq sncExample, "user=\$(IOCNAME)"
+
+EOF
+}
+
+function addExampleDb
+{
+    local DEST=${1}
+ #    cat > ${DEST}/circle.db <<"EOF"
+
+# record(ao, "$(user):circle:step") {
+#   field(VAL , "1.0")
+#   field(DRVL, "0.0")
+#   field(DRVH, "359")
+#   field(PINI, "YES")
+# }
+
+# record(ao, "$(user):circle:period") {
+#   field(VAL , "1.0")
+#   field(PINI, "YES")
+#   field(OUT , "$(user):circle:tick.ODLY NPP")
+# }
+
+# record(calc, "$(user):circle:angle") {
+#   field(PINI, "RUNNING") # bootstrap
+#   field(INPA, "$(user):circle:angle NPP")
+#   field(INPB, "$(user):circle:step NPP")
+#   field(INPD, "360")
+#   field(DESC, "Angle")
+#   field(EGU , "deg")
+#   field(LOLO, "45")
+#   field(LOW , "135")
+#   field(HIGH, "225")
+#   field(HIHI, "315")
+#   field(LLSV, "MAJOR")
+#   field(LSV , "MINOR")
+#   field(HSV , "MINOR")
+#   field(HHSV, "MAJOR")
+#   field(CALC, "C:=A+B;(C>=D)?C-D:C")
+#   field(FLNK, "$(user):circle:x")
+#   field(PREC, "3")
+#   info(Q:group, {
+#       "$(user):circle":{"angle": {+channel:"VAL"}},
+#       "$(user):line":{"a": {+channel:"VAL"}}
+#   })
+#   alias("$(user):line:a")
+# }
+
+# record(calc, "$(user):circle:x") {
+#   field(INPA, "$(user):circle:angle NPP")
+#   field(CALC, "cos(A*PI/180)")
+#   field(TSEL, "$(user):circle:angle.TIME")
+#   field(FLNK, "$(user):circle:y")
+#   field(PREC, "3")
+#   info(Q:group, {
+#       "$(user):circle":{"x": {+channel:"VAL"}}
+#   })
+# }
+
+# record(calc, "$(user):circle:y") {
+#   field(INPA, "$(user):circle:angle NPP")
+#   field(CALC, "sin(A*PI/180)")
+#   field(TSEL, "$(user):circle:angle.TIME")
+#   field(PREC, "3")
+#   field(FLNK, "$(user):line:b")
+#   info(Q:group, {
+#       "$(user):circle":{"y": {+channel:"VAL", +trigger:"*"}}
+#   })
+# }
+
+# record(ai, "$(user):line:b") {
+#   field(INP, "$(user):line:a NPP")
+#   field(FLNK, "$(user):circle:tick")
+#   info(Q:group, {
+#       "$(user):line":{"b": {+channel:"VAL", +trigger:"*"}}
+#   })
+# }
+
+# record(calcout, "$(user):circle:tick") {
+#   field(ODLY, "1.0")
+#   field(OUT , "$(user):circle:angle.PROC CA") # loop
+# }
+
+# EOF
+
+    cat > ${DEST}/dbExample1.db <<"EOF"
+record(ai, "$(user):aiExample")
+{
+        field(DESC, "Analog input")
+        field(INP, "$(user):calcExample.VAL  NPP NMS")
+        field(EGUF, "10")
+        field(EGU, "Counts")
+        field(HOPR, "10")
+        field(LOPR, "0")
+        field(HIHI, "8")
+        field(HIGH, "6")
+        field(LOW, "4")
+        field(LOLO, "2")
+        field(HHSV, "MAJOR")
+        field(HSV, "MINOR")
+        field(LSV, "MINOR")
+        field(LLSV, "MAJOR")
+}
+record(calc, "$(user):calcExample")
+{
+        field(DESC, "Counter")
+        field(SCAN,"1 second")
+        field(FLNK, "$(user):aiExample")
+        field(CALC, "(A<B)?(A+C):D")
+        field(INPA, "$(user):calcExample.VAL  NPP NMS")
+        field(INPB, "9")
+        field(INPC, "1")
+        field(INPD, "0")
+        field(EGU, "Counts")
+        field(HOPR, "10")
+        field(HIHI, "8")
+        field(HIGH, "6")
+        field(LOW, "4")
+        field(LOLO, "2")
+        field(HHSV, "MAJOR")
+        field(HSV, "MINOR")
+        field(LSV, "MINOR")
+        field(LLSV, "MAJOR")
+}
+record(compress,"$(user):compressExample")
+{
+        field(DESC, "Circular buffer")
+        field(INP,"$(user):aiExample.VAL CP NMS")
+        field(ALG,"Circular Buffer")
+        field(NSAM,"10")
+        field(HOPR,"10")
+        field(EGU,"Counts")
+}
+
+EOF
+
+    cat > ${DEST}/dbExample2.db <<"EOF"
+record(calc, "$(user):calcExample$(no)")
+{
+        alias("$(user):calc$(no)")
+        field(DESC, "Counter No. $(no)")
+        field(SCAN,"$(scan)")
+        field(FLNK, "$(user):aiExample$(no)")
+        field(CALC, "(A<B)?(A+C):D")
+        field(INPA, "$(user):calcExample$(no).VAL NPP NMS")
+        field(INPB, "9")
+        field(INPC, "1")
+        field(INPD, "0")
+        field(EGU, "Counts")
+        field(HOPR, "10")
+        field(HIHI, "8")
+        field(HIGH, "6")
+        field(LOW, "4")
+        field(LOLO, "2")
+        field(HHSV, "MAJOR")
+        field(HSV, "MINOR")
+        field(LSV, "MINOR")
+        field(LLSV, "MAJOR")
+}
+record(ai, "$(user):aiExample$(no)")
+{
+        field(DESC, "Analog input No. $(no)")
+        field(INP, "$(user):calcExample$(no).VAL NPP NMS")
+        field(EGUF, "10")
+        field(EGU, "Counts")
+        field(HOPR, "10")
+        field(LOPR, "0")
+        field(HIHI, "8")
+        field(HIGH, "6")
+        field(LOW, "4")
+        field(LOLO, "2")
+        field(HHSV, "MAJOR")
+        field(HSV, "MINOR")
+        field(LSV, "MINOR")
+        field(LLSV, "MAJOR")
+}
+alias("$(user):aiExample$(no)","$(user):ai$(no)")
+EOF
+
+
+    cat > ${DEST}/dbSubExample.db <<"EOF"
+record(sub,"$(user):subExample")
+{
+    field(INAM,"mySubInit")
+    field(SNAM,"mySubProcess")
+}
+record(aSub,"$(user):aSubExample")
+{
+    field(INAM,"myAsubInit")
+    field(SNAM,"myAsubProcess")
+    field(FTA,"DOUBLE")
+    field(NOA,"10")
+    field(INPA,"$(user):compressExample CPP")
+}
+
+EOF
+}
+
+
+function add_local_example_makefile
+{
+    local mod_name=${1}
+    ## Module_name.Makefile
+
+    cat > ${mod_name}.Makefile <<EOF
+#
+#  Copyright (c) 2018 - 2019  European Spallation Source ERIC
+#
+#  The program is free software: you can redistribute
+#  it and/or modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation, either version 2 of the
+#  License, or any newer version.
+#
+#  This program is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+#  more details.
+#
+#  You should have received a copy of the GNU General Public License along with
+#  this program. If not, see https://www.gnu.org/licenses/gpl-2.0.txt
+#
+# 
+# Author  : Jeong Han Lee
+# email   : han.lee@esss.se
+# Date    : 
+# version : 0.0.1 
+#
+
+## The following lines are mandatory, please don't change them.
+where_am_I := \$(dir \$(abspath \$(lastword \$(MAKEFILE_LIST))))
+include \$(E3_REQUIRE_TOOLS)/driver.makefile
+include \$(E3_REQUIRE_CONFIG)/DECOUPLE_FLAGS
+
+
+ifneq (\$(strip \$(SEQUENCER_DEP_VERSION)),)
+sequencer_VERSION=\$(SEQUENCER_DEP_VERSION)
+endif
+
+## Exclude linux-ppc64e6500 and linux-corei7-poky
+EXCLUDE_ARCHS = linux-ppc64e6500
+EXCLUDE_ARCHS += linux-corei7-poky
+
+APP:=${mod_name}App
+APPDB:=\$(APP)/Db
+APPSRC:=\$(APP)/src
+
+USR_INCLUDES += -I\$(where_am_I)\$(APPSRC)
+
+TEMPLATES += \$(wildcard \$(APPDB)/*.db)
+TEMPLATES += \$(wildcard \$(APPDB)/*.template)
+
+SOURCES += \$(APPSRC)/dbSubExample.c
+SOURCES += \$(APPSRC)/myexampleHello.c
+SOURCES += \$(APPSRC)/sncExample.stt
+
+DBDS    += \$(APPSRC)/dbSubExample.dbd
+DBDS    += \$(APPSRC)/myexampleHello.dbd
+DBDS    += \$(APPSRC)/sncExample.dbd
+
+
+db: 
+
+.PHONY: db 
+
+vlibs:
+
+.PHONY: vlibs
+
+
+EOF
+    
+}
+

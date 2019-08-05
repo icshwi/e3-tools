@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Monday, June  3 11:51:51 CEST 2019
-#   version : 0.8.0
+#   date    : Monday, August  5 16:51:41 CEST 2019
+#   version : 1.0.0
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -35,7 +35,7 @@ declare -g  UPDATE_LOG=".UPDATE_MODULE_LOG";
 declare -g  E3_MODULE_DEST=""
 
 declare -gr _E3_EPICS_PATH=/epics
-declare -gr _E3_BASE_VERSION=3.15.6
+declare -gr _E3_BASE_VERSION=7.0.3
 declare -gr _E3_REQUIRE_NAME=require
 declare -gr _E3_REQUIRE_VERSION=3.1.0
 declare -gr _EPICS_BASE=${_E3_EPICS_PATH}/base-${_E3_BASE_VERSION}
@@ -47,7 +47,11 @@ declare -g  _E3_TGT_URL_FULL=""
 declare -g  _E3_MODULE_GITURL_FULL=""
 
 
-. ${SC_TOP}/.e3_template_funcs.cfg
+. ${SC_TOP}/.e3_common_functions
+. ${SC_TOP}/.e3_example_functions
+. ${SC_TOP}/.e3_siteMods_functions
+. ${SC_TOP}/.e3_siteApps_functions
+
 
 
 targetpath=""
@@ -387,11 +391,15 @@ if [ -z "${updateSource}" ]; then
 	    printf "  We cannot do further, and stop it\n";
 	    exit ;
 	else
-	    add_configure_siteMods
+	    add_configure_siteMods;
 	fi
     else
 	if ! [ -z "${localsrc}" ]; then
-	    add_configure_siteApps_local
+	    if [[ "${_EPICS_MODULE_NAME}" =~ "example" ]]; then
+		add_configure_siteApps_localexample
+	    else
+		add_configure_siteApps_local
+	    fi
 	else
 	    add_configure_siteApps;
 	fi
@@ -399,9 +407,11 @@ if [ -z "${updateSource}" ]; then
     popd             # Back from configure
 
 
-    pushd configure/module # Enter in configure/E3
-    add_configure_module
-    popd               # Back from configure/E3
+    pushd configure/module # Enter in configure/module
+    
+    add_configure_module;
+    
+    popd               # Back from configure/module
 
 
     # # git init

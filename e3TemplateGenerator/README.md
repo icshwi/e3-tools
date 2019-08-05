@@ -85,13 +85,6 @@ $ bash e3TemplateGenerator.bash -m modules_conf/ecmctraining.conf -y
 ```
 
 
-# Update existent E3 Apps / Modules
-
-```
-$ bash e3TemplateGenerator.bash -u e3-iocStats
-```
-
-
 # Create NON existent E3 Apps with local source files
 Since we would like to keep all source files within e3 path, we don't need to define ```EPICS_MODULE_URL```
 
@@ -138,5 +131,13 @@ exampleApp/
     ├── [jhlee      25]  myexampleHello.dbd
     ├── [jhlee      31]  sncExample.dbd
     └── [jhlee     455]  sncExample.stt
+```
+
+
+
+# Update existent E3 Apps / Modules
+
+```
+$ bash e3TemplateGenerator.bash -u e3-iocStats
 ```
 
