@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Monday, August  5 16:51:41 CEST 2019
-#   version : 1.0.0
+#   date    : Monday, August  5 17:46:26 CEST 2019
+#   version : 1.0.1
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -294,8 +294,10 @@ if [ -z "${updateSource}" ]; then
 
     _E3_MOD_NAME=e3-${_EPICS_MODULE_NAME}
 
+    #
+    # gitlab needs .git after URL, github doesn't
     if ! [ -z "${remotesrc}" ]; then
-	_E3_MODULE_GITURL_FULL=${epics_mod_url}/${_E3_MODULE_SRC_PATH}
+	_E3_MODULE_GITURL_FULL=${epics_mod_url}/${_E3_MODULE_SRC_PATH}.git
     fi
 
     _E3_TGT_URL_FULL=${e3_target_url}/${_E3_MOD_NAME}.git

@@ -51,7 +51,7 @@ install:
   - make existent LEVEL=4
   - popd
   - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteMods-template-devlib2.conf -y
-  - pushd  e3-devlibs
+  - pushd  e3-devlib2
   - scp ${TRAVIS_BUILD_DIR}/.ci/devlib2.Makefile .
   - scp ${TRAVIS_BUILD_DIR}/.ci/CONFIG_MODULE configure/
   - make vars
