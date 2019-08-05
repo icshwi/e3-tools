@@ -32,6 +32,8 @@ before_install:
 
 install:
   - pushd e3TemplateGenerator
+  - echo "EPICS_BASE:=${E3_PATH}/base-${BASE}" > RELEASE.local
+  - echo "E3_REQUIRE_VERSION:=${REQUIRE}"     >> RELEASE.local
   - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteApps-template-genesysGEN5kWPS.conf
   - pushd e3-genesysGEN5kWPS
   - make vars
@@ -47,12 +49,13 @@ install:
   - make install
   - make existent LEVEL=4
   - popd
-  - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteMods-template-MCoreUtils.conf
+  - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteMods-template-MCoreUtils.conf -y
   - pushd  e3-MCoreUtils
   - make vars
   - make init
   - make build
   - make install
   - make existent LEVEL=4
+  - popd
   - popd
 
