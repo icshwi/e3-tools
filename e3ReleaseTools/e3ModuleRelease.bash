@@ -69,7 +69,8 @@ while getopts "${options}" opt; do
 	    echo "Option -$OPTARG requires an argument." >&2
 	    exit 1
 	    ;;
-	h) usage ;;
+	h) usage
+	   ;;
 	\?)
 	    echo "Invalid option: -$OPTARG" >&2
 	    exit
