@@ -601,6 +601,24 @@ EOF
 
 }
 
+
+function add_RELEASE_variables
+{
+    cat > RELEASE <<"EOF"
+#
+EPICS_BASE=$(EPICS_BASE)
+
+E3_REQUIRE_NAME:=$(E3_REQUIRE_NAME)
+E3_REQUIRE_VERSION:=$(E3_REQUIRE_VERSION)
+
+# The definitions shown below can also be placed in an untracked RELEASE.local
+-include $(TOP)/../../RELEASE.local
+-include $(TOP)/../RELEASE.local
+-include $(TOP)/configure/RELEASE.local
+EOF
+}
+
+
 function add_RELEASE_DEV
 {
     cat > RELEASE_DEV <<EOF
@@ -620,6 +638,23 @@ EOF
 }
 
 
+
+
+function add_RELEASE_DEV_variables
+{
+    cat > RELEASE_DEV <<"EOF"
+#
+EPICS_BASE=$(EPICS_BASE)
+
+E3_REQUIRE_NAME:=$(E3_REQUIRE_NAME)
+E3_REQUIRE_VERSION:=$(E3_REQUIRE_VERSION)
+
+# The definitions shown below can also be placed in an untracked RELEASE.local
+-include $(TOP)/../../RELEASE_DEV.local
+-include $(TOP)/../RELEASE_DEV.local
+-include $(TOP)/configure/RELEASE_DEV.local
+EOF
+}
 
 
 function add_rules_module
