@@ -55,8 +55,8 @@ install:
   - make install
   - make existent LEVEL=4
   - popd
-  - rm *.local
-  - rm e3-*
+  - sudo rm -rf *.local
+  - sudo rm -rf e3-*
   - source ${E3_SRC_PATH}/tools/setenv
   - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteApps-template-genesysGEN5kWPS.conf -r 
   - pushd e3-genesysGEN5kWPS
