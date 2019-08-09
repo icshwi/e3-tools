@@ -202,8 +202,9 @@ function module_info
     
 }
 
-options=":m:u:d:y"
+options=":m:u:d:yr"
 SITEMODS="NO"
+RELEASEVARS="NO";
 
 while getopts "${options}" opt; do
     case "${opt}" in
@@ -220,6 +221,9 @@ while getopts "${options}" opt; do
 	    ;;
 	y)
 	    SITEMODS="YES";
+	    ;;
+	r)
+	    RELEASEVARS="YES";
 	    ;;
 	*)
 	    usage
@@ -393,17 +397,33 @@ if [ -z "${updateSource}" ]; then
 	    printf "  We cannot do further, and stop it\n";
 	    exit ;
 	else
-	    add_configure_siteMods;
+	    if [ "$RELEASEVARS" == "YES" ]; then
+		add_configure_siteMods_variables;
+	    else
+		add_configure_siteMods;
+	    fi
 	fi
     else
 	if ! [ -z "${localsrc}" ]; then
 	    if [[ "${_EPICS_MODULE_NAME}" =~ "example" ]]; then
-		add_configure_siteApps_localexample
+		if [ "$RELEASEVARS" == "YES" ]; then
+		    add_configure_siteApps_localexample_variables;
+		else
+		    add_configure_siteApps_localexample;
+		fi
 	    else
-		add_configure_siteApps_local
+		if [ "$RELEASEVARS" == "YES" ]; then
+		    add_configure_siteApps_local_variables;
+		else
+		    add_configure_siteApps_local
+		fi
 	    fi
 	else
-	    add_configure_siteApps;
+	    if [ "$RELEASEVARS" == "YES" ]; then
+		add_configure_siteApps_variables;
+	    else
+		add_configure_siteApps;
+	    fi
 	fi
     fi
     popd             # Back from configure

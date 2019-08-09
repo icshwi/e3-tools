@@ -204,3 +204,21 @@ function add_configure_siteMods
 
 
 
+function add_configure_siteMods_variables
+{
+    # .e3_siteMods_functions
+    add_CONFIG_siteMods            ||  die 1 "We cannot do add_CONFIG_siteMods : please check it";
+    # .e3_common_functions
+    add_RELEASE_variables          ||  die 1 "We cannot do add_RELEASE         : please check it";
+    add_RELEASE_DEV_variables      ||  die 1 "We cannot do add_RELEASE_DEV     : please check it";
+    # .e3_siteMods_functions
+    add_CONFIG_MODULE_siteMods     ||  die 1 "We cannot do add_CONFIG_MODULE_siteMods : please check it";
+    add_CONFIG_MODULE_DEV_siteMods ||  die 1 "We cannot do add_CONFIG_MODULE_DEV_siteMods : please check it";
+    add_RULES_siteMods             ||  die 1 "We cannot do add_RULES_siteMods : please check it";
+    # .e3_common_functions
+    add_CONFIG_OPTIONS             ||  die 1 "We cannot do add_CONFIG_OPTIONS : please check it";
+}
+
+
+
+

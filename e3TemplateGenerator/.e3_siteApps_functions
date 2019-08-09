@@ -324,3 +324,57 @@ function add_configure_siteApps_localexample
     add_CONFIG_OPTIONS            ||  die 1 "We cannot do add_CONFIG_OPTIONS : please check it";
 }
 
+
+
+function add_configure_siteApps_variables
+{
+    # .e3_siteApps_functions
+    add_CONFIG_siteApps            ||  die 1 "We cannot do add_CONFIG_sitAppps        : please check it";
+    add_CONFIG_SITE_SYSTEMAPPS     ||  die 1 "We cannot do add_CONFIG_SITE_SYSTEMAPPS : please check it";
+    # .e3_common_functions
+    add_RELEASE_variables          ||  die 1 "We cannot do add_RELEASE         : please check it";
+    add_RELEASE_DEV_variables      ||  die 1 "We cannot do add_RELEASE_DEV     : please check it";
+    # .e3_siteApps_functions
+    add_CONFIG_MODULE_siteApps     ||  die 1 "We cannot do add_CONFIG_MODULE_siteApps     : please check it";
+    add_CONFIG_MODULE_DEV_siteApps ||  die 1 "We cannot do add_CONFIG_MODULE_DEV_siteApps : please check it";
+    add_RULES_siteApps             ||  die 1 "We cannot do add_RULES_siteApps : please check it";
+    # .e3_common_functions
+    add_CONFIG_OPTIONS             ||  die 1 "We cannot do add_CONFIG_OPTIONS : please check it";
+}
+
+
+#
+# We don't need the development mode, because all source files are located in *-loc path
+#
+function add_configure_siteApps_local_variables
+{
+    # .e3_siteApps_functions
+    add_CONFIG_siteApps_local     ||  die 1 "We cannot do add_CONFIG_sitAppps_local  : please check it";
+    add_CONFIG_SITE_SYSTEMAPPS    ||  die 1 "We cannot do add_CONFIG_SITE_SYSTEMAPPS : please check it";
+    # .e3_common_functions
+    add_RELEASE_variables         ||  die 1 "We cannot do add_RELEASE         : please check it";
+    # .e3_siteApps_functions
+    add_CONFIG_MODULE_siteApps    ||  die 1 "We cannot do add_CONFIG_MODULE_siteApps     : please check it";
+    add_RULES_siteApps_local      ||  die 1 "We cannot do add_RULES_siteApps_local : please check it";
+    # .e3_common_functions
+    add_CONFIG_OPTIONS            ||  die 1 "We cannot do add_CONFIG_OPTIONS : please check it";
+}
+
+
+#
+# We don't need the development mode, because all source files are located in *-loc path
+#
+function add_configure_siteApps_localexample_variables
+{
+    # .e3_siteApps_functions
+    add_CONFIG_siteApps_local     ||  die 1 "We cannot do add_CONFIG_sitAppps_local  : please check it";
+    add_CONFIG_SITE_SYSTEMAPPS    ||  die 1 "We cannot do add_CONFIG_SITE_SYSTEMAPPS : please check it";
+    # .e3_common_functions
+    add_RELEASE_variables         ||  die 1 "We cannot do add_RELEASE         : please check it";
+    # .e3_siteApps_functions
+    add_CONFIG_MODULE_siteApps_localexample  ||  die 1 "We cannot do add_CONFIG_MODULE_siteApps_localexample    : please check it";
+    add_RULES_siteApps_local      ||  die 1 "We cannot do add_RULES_siteApps_local : please check it";
+    # .e3_common_functions
+    add_CONFIG_OPTIONS            ||  die 1 "We cannot do add_CONFIG_OPTIONS : please check it";
+}
+

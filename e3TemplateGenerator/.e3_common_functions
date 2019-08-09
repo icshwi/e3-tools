@@ -587,7 +587,7 @@ function add_RELEASE
 {
     cat > RELEASE <<EOF
 #
-EPICS_BASE=${_EPICS_BASE}
+EPICS_BASE:=${_EPICS_BASE}
 
 E3_REQUIRE_NAME:=${_E3_REQUIRE_NAME}
 E3_REQUIRE_VERSION:=${_E3_REQUIRE_VERSION}
@@ -601,11 +601,29 @@ EOF
 
 }
 
+
+function add_RELEASE_variables
+{
+    cat > RELEASE <<"EOF"
+#
+EPICS_BASE:=$(EPICS_BASE)
+
+E3_REQUIRE_NAME:=$(E3_REQUIRE_NAME)
+E3_REQUIRE_VERSION:=$(E3_REQUIRE_VERSION)
+
+# The definitions shown below can also be placed in an untracked RELEASE.local
+-include $(TOP)/../../RELEASE.local
+-include $(TOP)/../RELEASE.local
+-include $(TOP)/configure/RELEASE.local
+EOF
+}
+
+
 function add_RELEASE_DEV
 {
     cat > RELEASE_DEV <<EOF
 #
-EPICS_BASE=${_EPICS_BASE}
+EPICS_BASE:=${_EPICS_BASE}
 
 E3_REQUIRE_NAME:=${_E3_REQUIRE_NAME}
 E3_REQUIRE_VERSION:=${_E3_REQUIRE_VERSION}
@@ -620,6 +638,23 @@ EOF
 }
 
 
+
+
+function add_RELEASE_DEV_variables
+{
+    cat > RELEASE_DEV <<"EOF"
+#
+EPICS_BASE:=$(EPICS_BASE)
+
+E3_REQUIRE_NAME:=$(E3_REQUIRE_NAME)
+E3_REQUIRE_VERSION:=$(E3_REQUIRE_VERSION)
+
+# The definitions shown below can also be placed in an untracked RELEASE.local
+-include $(TOP)/../../RELEASE_DEV.local
+-include $(TOP)/../RELEASE_DEV.local
+-include $(TOP)/configure/RELEASE_DEV.local
+EOF
+}
 
 
 function add_rules_module
@@ -637,12 +672,12 @@ hdrs:
 
 #.PHONY: epics
 #epics:
-#	$(QUIET)echo "EPICS_BASE=$(EPICS_BASE)"        > $(TOP)/$(E3_MODULE_SRC_PATH)/configure/RELEASE
-#	$(QUIET)echo "ASYN=$(M_ASYN)"                  > $(TOP)/$(E3_MODULE_SRC_PATH)/configure/RELEASE
-#	$(QUIET)echo "SSCAN=$(M_SSCAN)"               >> $(TOP)/$(E3_MODULE_SRC_PATH)/configure/RELEASE
-#	$(QUIET)echo "SNCSEQ=$(M_SNCSEQ)"             >> $(TOP)/$(E3_MODULE_SRC_PATH)/configure/RELEASE
-#	$(QUIET)echo "CHECK_RELEASE = YES"             > $(TOP)/$(E3_MODULE_SRC_PATH)/configure/CONFIG_SITE
-#	$(QUIET)echo "INSTALL_LOCATION=$(M_DEVLIB2)"  >> $(TOP)/$(E3_MODULE_SRC_PATH)/configure/CONFIG_SITE
+#	$(QUIET)echo "EPICS_BASE:=$(EPICS_BASE)"        > $(TOP)/$(E3_MODULE_SRC_PATH)/configure/RELEASE
+#	$(QUIET)echo "ASYN:=$(M_ASYN)"                  > $(TOP)/$(E3_MODULE_SRC_PATH)/configure/RELEASE
+#	$(QUIET)echo "SSCAN:=$(M_SSCAN)"               >> $(TOP)/$(E3_MODULE_SRC_PATH)/configure/RELEASE
+#	$(QUIET)echo "SNCSEQ:=$(M_SNCSEQ)"             >> $(TOP)/$(E3_MODULE_SRC_PATH)/configure/RELEASE
+#	$(QUIET)echo "CHECK_RELEASE:=YES"             > $(TOP)/$(E3_MODULE_SRC_PATH)/configure/CONFIG_SITE
+#	$(QUIET)echo "INSTALL_LOCATION:=$(M_DEVLIB2)"  >> $(TOP)/$(E3_MODULE_SRC_PATH)/configure/CONFIG_SITE
 #	$(SUDOBASH) "$(MAKE) -C $(E3_MODULE_SRC_PATH)"
 
 EOF
@@ -741,7 +776,7 @@ function add_RELEASE_Update
     
     cat > RELEASE <<EOF
 #
-EPICS_BASE=${base_path}
+EPICS_BASE:=${base_path}
 
 E3_REQUIRE_NAME:=require
 E3_REQUIRE_VERSION:=${require_version}
@@ -755,7 +790,7 @@ EOF
 
     cat > RELEASE_DEV <<EOF
 #
-EPICS_BASE=${base_path}
+EPICS_BASE:=${base_path}
 
 E3_REQUIRE_NAME:=require
 E3_REQUIRE_VERSION:=${require_version}
