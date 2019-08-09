@@ -31,6 +31,7 @@ install:
   - echo "E3_REQUIRE_VERSION:=${REQUIRE}"     >> RELEASE.local
   - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteApps-template-genesysGEN5kWPS.conf
   - pushd e3-genesysGEN5kWPS
+  - cat configure/RELEASE
   - scp ${TRAVIS_BUILD_DIR}/.ci/genesysGEN5kWPS.Makefile .
   - make vars
   - make init
@@ -40,6 +41,7 @@ install:
   - popd
   - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteApps-template-localexample.conf
   - pushd e3-example
+  - cat configure/RELEASE
   - make vars
   - make build
   - make install
@@ -47,6 +49,7 @@ install:
   - popd
   - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteMods-template-devlib2.conf -y
   - pushd  e3-devlib2
+  - cat configure/RELEASE
   - scp ${TRAVIS_BUILD_DIR}/.ci/devlib2.Makefile .
   - scp ${TRAVIS_BUILD_DIR}/.ci/CONFIG_MODULE configure/
   - make vars
@@ -60,6 +63,7 @@ install:
   - source ${E3_PATH}/base-${BASE}/require/${REQUIRE}/bin/setE3Env.bash
   - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteApps-template-genesysGEN5kWPS.conf -r 
   - pushd e3-genesysGEN5kWPS
+  - cat configure/RELEASE
   - scp ${TRAVIS_BUILD_DIR}/.ci/genesysGEN5kWPS.Makefile .
   - make vars
   - make init
@@ -69,6 +73,7 @@ install:
   - popd
   - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteApps-template-localexample.conf -r
   - pushd e3-example
+  - cat configure/RELEASE
   - make vars
   - make build
   - make install
@@ -76,6 +81,7 @@ install:
   - popd
   - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteMods-template-devlib2.conf -y -r
   - pushd  e3-devlib2
+  - cat configure/RELEASE
   - scp ${TRAVIS_BUILD_DIR}/.ci/devlib2.Makefile .
   - scp ${TRAVIS_BUILD_DIR}/.ci/CONFIG_MODULE configure/
   - make vars
