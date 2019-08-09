@@ -23,7 +23,7 @@ env:
     
     
 before_install:
-  - bash .ci/prepare_e3.bash
+  - bash ${TRAVIS_BUILD_DIR}/.ci/prepare_e3.bash
 
 install:
   - pushd e3TemplateGenerator
@@ -57,7 +57,7 @@ install:
   - popd
   - sudo rm -rf *.local
   - sudo rm -rf e3-*
-  - source ${E3_SRC_PATH}/tools/setenv
+  - source ${E3_PATH}/base-${BASE}/require/${REQUIRE}/bin/setE3Env.bash
   - answer=N | bash e3TemplateGenerator.bash -m modules_conf/siteApps-template-genesysGEN5kWPS.conf -r 
   - pushd e3-genesysGEN5kWPS
   - scp ${TRAVIS_BUILD_DIR}/.ci/genesysGEN5kWPS.Makefile .
