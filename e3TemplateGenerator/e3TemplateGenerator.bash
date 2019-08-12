@@ -70,6 +70,7 @@ function usage
 	echo "               -m : a module configuration file, please check ${SC_TOP}/modules_conf"
 	echo "               -d : a destination, optional, Default \$PWD : ${SC_TOP} "
 	echo "               -u : an existent module path for updating configuration files";
+	echo "               -r : generate the RELEASE file with your EPICS env variables instead of the default values"
 	echo "";
 	echo "Examples in modules_conf  : ";
 	echo "";
