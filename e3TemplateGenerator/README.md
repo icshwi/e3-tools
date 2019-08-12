@@ -20,7 +20,7 @@ Usage    : ./e3TemplateGenerator.bash [-m <module_configuraton_file>] [-d <modul
                -m : a module configuration file, please check ../e3-tools/e3TemplateGenerator/modules_conf
                -d : a destination, optional, Default $PWD : ../e3-tools/e3TemplateGenerator 
                -u : an existent module path for updating configuration files
-               -r : generate the RELEASE file with your EPICS envs instead of the default ones
+               -r : generate the RELEASE file with your EPICS env variables instead of the default values
 ###
 If the -r option is used, the RELEASE file will look like the following:
 
