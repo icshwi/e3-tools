@@ -14,6 +14,26 @@ One should define and understand the following variables first. It is important 
 
 **Note that this name should be letters (upper and lower case) and digits.** The underscore character `_` is also permitted. Technically, this name is coverted into char variable within c program. Thus, it should follow the c programming variable rule. 
 
+## Run a template generator
+Usage    : ./e3TemplateGenerator.bash [-m <module_configuraton_file>] [-d <module_destination_path>]
+
+               -m : a module configuration file, please check ../e3-tools/e3TemplateGenerator/modules_conf
+               -d : a destination, optional, Default $PWD : ../e3-tools/e3TemplateGenerator 
+               -u : an existent module path for updating configuration files
+               -r : generate the RELEASE file with your EPICS envs instead of the default ones
+###
+If the -r option is used, the RELEASE file will look like the following:
+
+EPICS_BASE:=$(EPICS_BASE)
+
+E3_REQUIRE_NAME:=$(E3_REQUIRE_NAME)
+
+E3_REQUIRE_VERSION:=$(E3_REQUIRE_VERSION)
+
+....
+
+In this way the Makefile will fetch the above variables at compilation time from you EPICS environment (be sure to source it before), avoiding the needs to edit the file to change the default values if you need to change them. This can be useful if for instance you have multiple version of EPICS and you don't want to edit the RELEASE file everytime you compile your APPS with different version of EPICS. 
+
 ## Site Apps / IOCs (siteApps)
 
 ### Genesys GEN 5kW Power Supply 
