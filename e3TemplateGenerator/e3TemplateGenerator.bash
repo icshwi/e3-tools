@@ -392,10 +392,26 @@ if [ -z "${updateSource}" ]; then
 
     pushd configure  # Enter in configure
     if [ "$SITEMODS" == "YES" ]; then
-	if [ "$RELEASEVARS" == "YES" ]; then
+	if ! [ -z "${localsrc}" ]; then
+	    if [[ "${_EPICS_MODULE_NAME}" =~ "example" ]]; then
+		if [ "$RELEASEVARS" == "YES" ]; then
+		    add_configure_siteMods_localexample_variables;
+		else
+		    add_configure_siteMods_localexample;
+		fi
+	    else
+		if [ "$RELEASEVARS" == "YES" ]; then
+		    add_configure_siteMods_local_variables;
+		else
+		    add_configure_siteMods_local
+		fi
+	    fi
+	else	
+	    if [ "$RELEASEVARS" == "YES" ]; then
 		add_configure_siteMods_variables;
-	else
-	    add_configure_siteMods;
+	    else
+		add_configure_siteMods;
+	    fi
 	fi
     else
 	if ! [ -z "${localsrc}" ]; then
