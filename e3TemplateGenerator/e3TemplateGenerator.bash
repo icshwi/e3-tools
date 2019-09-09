@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (c) 2018 - Present Jeong Han Lee
+#  Copyright (c) 2018 - 2019    Jeong Han Lee
 #  Copyright (c) 2018 - 2019    European Spallation Source ERIC
 #
 #  The program is free software: you can redistribute
@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Monday, August  5 17:46:26 CEST 2019
-#   version : 1.0.1
+#   date    : Monday, September  9 20:12:47 CEST 2019
+#   version : 1.0.3
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -79,8 +79,8 @@ function usage
 	echo "";
 	echo "         : $0 [-u <existent_module_path>] {-y} ";
 	echo "               -u : an existent module path for updating configuration files";
-	echo "               -y : siteMods (Site Modules)"
-	echo "                  : without -y, Default is siteApps (Site Application)";
+	echo "               -y : siteApps (Site Applications - deprecated, but still can be used )"
+	echo "                  : without -y, Default is siteMods";
 	echo "";
 	echo "";
 	echo ""
@@ -204,7 +204,7 @@ function module_info
 }
 
 options=":m:u:d:yr"
-SITEMODS="NO"
+SITEMODS="YES"
 RELEASEVARS="NO";
 
 while getopts "${options}" opt; do
@@ -221,7 +221,7 @@ while getopts "${options}" opt; do
 	    EXIST_SRC_PATH=${OPTARG};
 	    ;;
 	y)
-	    SITEMODS="YES";
+	    SITEMODS="NO";
 	    ;;
 	r)
 	    RELEASEVARS="YES";
@@ -393,11 +393,20 @@ if [ -z "${updateSource}" ]; then
     pushd configure  # Enter in configure
     if [ "$SITEMODS" == "YES" ]; then
 	if ! [ -z "${localsrc}" ]; then
-	    printf ">>\n"
-	    printf "  Local Mode should be the siteApps instead of siteMods\n";
-	    printf "  We cannot do further, and stop it\n";
-	    exit ;
-	else
+	    if [[ "${_EPICS_MODULE_NAME}" =~ "example" ]]; then
+		if [ "$RELEASEVARS" == "YES" ]; then
+		    add_configure_siteMods_localexample_variables;
+		else
+		    add_configure_siteMods_localexample;
+		fi
+	    else
+		if [ "$RELEASEVARS" == "YES" ]; then
+		    add_configure_siteMods_local_variables;
+		else
+		    add_configure_siteMods_local
+		fi
+	    fi
+	else	
 	    if [ "$RELEASEVARS" == "YES" ]; then
 		add_configure_siteMods_variables;
 	    else

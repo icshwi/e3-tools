@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Monday, August  5 10:57:08 CEST 2019
-#   version : 1.0.0
+#   date    : Monday, September  9 20:50:33 CEST 2019
+#   version : 1.0.1
 
 function add_readme_siteMods
 {
@@ -62,28 +62,22 @@ EOF
 }
 
 
+function add_CONFIG_siteMods_local
+{
+    cat > CONFIG <<"EOF"
+#
+VARS_EXCLUDES := $(.VARIABLES)
 
+include $(TOP)/configure/RELEASE
+include $(TOP)/configure/CONFIG_MODULE
 
+E3_REQUIRE_LOCATION := $(EPICS_BASE)/$(E3_REQUIRE_NAME)/$(E3_REQUIRE_VERSION)
+REQUIRE_CONFIG := $(E3_REQUIRE_LOCATION)/configure
 
+include $(REQUIRE_CONFIG)/CONFIG
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+EOF
+}
 
 
 
@@ -187,6 +181,68 @@ EOF
 }
 
 
+function add_RULES_siteMods_local
+{
+    cat > RULES <<"EOF"
+
+include $(REQUIRE_CONFIG)/RULES_E3
+include $(REQUIRE_CONFIG)/DEFINES_FT
+include $(REQUIRE_CONFIG)/RULES_PATCH
+include $(REQUIRE_CONFIG)/RULES_E3_SITELIBS
+
+include $(REQUIRE_CONFIG)/RULES_VLIBS
+include $(REQUIRE_CONFIG)/RULES_VARS
+
+include $(TOP)/configure/module/RULES_MODULE
+-include $(TOP)/configure/module/RULES_DKMS_L
+
+EOF
+}
+
+
+function add_CONFIG_MODULE_siteMods_localexample
+{
+
+       cat > CONFIG_MODULE <<EOF
+#
+EPICS_MODULE_NAME:=${_EPICS_MODULE_NAME}
+
+EPICS_MODULE_TAG:=master
+#
+E3_MODULE_VERSION:=master
+
+# DEPENDENT MODULE VERSION
+# For Example, 
+#DEVLIB2_DEP_VERSION:=2.9.0
+#ASYN_DEP_VERSION:=4.33.0
+#PCRE_DEP_VERSION:=8.41.
+#ADCORE_DEP_VERSION:=3.3.2
+#ADSUPPORT_DEP_VERSION:=1.4.0
+#LOKI_DEP_VERSION=1.0.0
+#NDS_DEP_VERSION=2.3.3
+#SIS8300DRV_DEP_VERSION=4.3.1
+SEQUENCER_DEP_VERSION=2.2.6
+#
+# 
+#E3_KMOD_SRC_PATH:=\$(E3_MODULE_SRC_PATH)
+#
+# In most case, we don't need to touch the following variables.
+#
+
+E3_MODULE_NAME:=\$(EPICS_MODULE_NAME)
+E3_MODULE_SRC_PATH:=${_E3_MODULE_SRC_PATH}
+E3_MODULE_MAKEFILE:=\$(EPICS_MODULE_NAME).Makefile
+
+
+-include \$(TOP)/configure/CONFIG_OPTIONS
+# The definitions shown below can also be placed in an untracked CONFIG_MODULE.local
+-include \$(TOP)/configure/CONFIG_MODULE.local
+
+EOF
+}
+
+
+
 function add_configure_siteMods
 {
     # .e3_siteMods_functions
@@ -198,6 +254,35 @@ function add_configure_siteMods
     add_CONFIG_MODULE_siteMods     ||  die 1 "We cannot do add_CONFIG_MODULE_siteMods : please check it";
     add_CONFIG_MODULE_DEV_siteMods ||  die 1 "We cannot do add_CONFIG_MODULE_DEV_siteMods : please check it";
     add_RULES_siteMods             ||  die 1 "We cannot do add_RULES_siteMods : please check it";
+    # .e3_common_functions
+    add_CONFIG_OPTIONS             ||  die 1 "We cannot do add_CONFIG_OPTIONS : please check it";
+}
+
+
+function add_configure_siteMods_local
+{
+    # .e3_siteMods_functions
+    add_CONFIG_siteMods_local      ||  die 1 "We cannot do add_CONFIG_siteMods_local : please check it";
+    # .e3_common_functions
+    add_RELEASE                    ||  die 1 "We cannot do add_RELEASE         : please check it";
+    # .e3_siteMods_functions
+    add_CONFIG_MODULE_siteMods     ||  die 1 "We cannot do add_CONFIG_MODULE_siteMods : please check it";
+    add_RULES_siteMods_local       ||  die 1 "We cannot do add_RULES_siteMods_local : please check it";
+    # .e3_common_functions
+    add_CONFIG_OPTIONS             ||  die 1 "We cannot do add_CONFIG_OPTIONS : please check it";
+}
+
+
+
+function add_configure_siteMods_localexample
+{
+    # .e3_siteMods_functions
+    add_CONFIG_siteMods_local      ||  die 1 "We cannot do add_CONFIG_siteMods_local : please check it";
+    # .e3_common_functions
+    add_RELEASE                    ||  die 1 "We cannot do add_RELEASE         : please check it";
+    # .e3_siteMods_functions
+    add_CONFIG_MODULE_siteMods_localexample   ||  die 1 "We cannot do add_CONFIG_MODULE_siteMods : please check it";
+    add_RULES_siteMods_local       ||  die 1 "We cannot do add_RULES_siteMods_local : please check it";
     # .e3_common_functions
     add_CONFIG_OPTIONS             ||  die 1 "We cannot do add_CONFIG_OPTIONS : please check it";
 }
@@ -221,4 +306,38 @@ function add_configure_siteMods_variables
 
 
 
+
+
+#
+# We don't need the development mode, because all source files are located in *-loc path
+#
+function add_configure_siteMods_local_variables
+{
+    # .e3_siteMods_functions
+    add_CONFIG_siteMods_local     ||  die 1 "We cannot do add_CONFIG_sitMods_local : please check it";
+    # .e3_common_functions
+    add_RELEASE_variables         ||  die 1 "We cannot do add_RELEASE_variables : please check it";
+    # .e3_siteMods_functions
+    add_CONFIG_MODULE_siteMods    ||  die 1 "We cannot do add_CONFIG_MODULE_siteMods : please check it";
+    add_RULES_siteMods_local      ||  die 1 "We cannot do add_RULES_siteMods_local : please check it";
+    # .e3_common_functions
+    add_CONFIG_OPTIONS            ||  die 1 "We cannot do add_CONFIG_OPTIONS : please check it";
+}
+
+
+#
+# We don't need the development mode, because all source files are located in *-loc path
+#
+function add_configure_siteMods_localexample_variables
+{
+    # .e3_siteMods_functions
+    add_CONFIG_siteMods_local     ||  die 1 "We cannot do add_CONFIG_sitMods_local : please check it";
+    # .e3_common_functions
+    add_RELEASE_variables         ||  die 1 "We cannot do add_RELEASE_variables : please check it";
+    # .e3_siteMods_functions
+    add_CONFIG_MODULE_siteMods_localexample    ||  die 1 "We cannot do add_CONFIG_MODULE_siteMods_localexample : please check it";
+    add_RULES_siteMods_local      ||  die 1 "We cannot do add_RULES_siteMods_local : please check it";
+    # .e3_common_functions
+    add_CONFIG_OPTIONS            ||  die 1 "We cannot do add_CONFIG_OPTIONS : please check it";
+}
 
