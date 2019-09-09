@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Monday, August  5 17:46:26 CEST 2019
-#   version : 1.0.1
+#   date    : Monday, September  9 15:54:03 CEST 2019
+#   version : 1.0.2
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -79,8 +79,8 @@ function usage
 	echo "";
 	echo "         : $0 [-u <existent_module_path>] {-y} ";
 	echo "               -u : an existent module path for updating configuration files";
-	echo "               -y : siteMods (Site Modules)"
-	echo "                  : without -y, Default is siteApps (Site Application)";
+	echo "               -y : siteApps (Site Applications - deprecated, but still can be used )"
+	echo "                  : without -y, Default is siteMods";
 	echo "";
 	echo "";
 	echo ""
@@ -204,7 +204,7 @@ function module_info
 }
 
 options=":m:u:d:yr"
-SITEMODS="NO"
+SITEMODS="YES"
 RELEASEVARS="NO";
 
 while getopts "${options}" opt; do
@@ -221,7 +221,7 @@ while getopts "${options}" opt; do
 	    EXIST_SRC_PATH=${OPTARG};
 	    ;;
 	y)
-	    SITEMODS="YES";
+	    SITEMODS="NO";
 	    ;;
 	r)
 	    RELEASEVARS="YES";
