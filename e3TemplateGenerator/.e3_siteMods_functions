@@ -328,7 +328,7 @@ function add_configure_siteMods_local_variables
 #
 # We don't need the development mode, because all source files are located in *-loc path
 #
-function add_configure_siteApps_localexample_variables
+function add_configure_siteMods_localexample_variables
 {
     # .e3_siteMods_functions
     add_CONFIG_siteMods_local     ||  die 1 "We cannot do add_CONFIG_sitMods_local : please check it";
