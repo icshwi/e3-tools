@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#  Copyright (c) 2018 - Present Jeong Han Lee
+#  Copyright (c) 2018 - 2019    Jeong Han Lee
 #  Copyright (c) 2018 - 2019    European Spallation Source ERIC
 #
 #  The program is free software: you can redistribute
@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Monday, September  9 15:54:03 CEST 2019
-#   version : 1.0.2
+#   date    : Monday, September  9 20:12:47 CEST 2019
+#   version : 1.0.3
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -392,17 +392,10 @@ if [ -z "${updateSource}" ]; then
 
     pushd configure  # Enter in configure
     if [ "$SITEMODS" == "YES" ]; then
-	if ! [ -z "${localsrc}" ]; then
-	    printf ">>\n"
-	    printf "  Local Mode should be the siteApps instead of siteMods\n";
-	    printf "  We cannot do further, and stop it\n";
-	    exit ;
-	else
-	    if [ "$RELEASEVARS" == "YES" ]; then
+	if [ "$RELEASEVARS" == "YES" ]; then
 		add_configure_siteMods_variables;
-	    else
-		add_configure_siteMods;
-	    fi
+	else
+	    add_configure_siteMods;
 	fi
     else
 	if ! [ -z "${localsrc}" ]; then
