@@ -37,7 +37,7 @@ declare -g  E3_MODULE_DEST=""
 declare -gr _E3_EPICS_PATH=/epics
 declare -gr _E3_BASE_VERSION=7.0.3
 declare -gr _E3_REQUIRE_NAME=require
-declare -gr _E3_REQUIRE_VERSION=3.1.0
+declare -gr _E3_REQUIRE_VERSION=3.1.1
 declare -gr _EPICS_BASE=${_E3_EPICS_PATH}/base-${_E3_BASE_VERSION}
 
 declare -g  _EPICS_MODULE_NAME=""
