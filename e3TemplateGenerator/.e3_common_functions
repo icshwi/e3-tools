@@ -207,11 +207,11 @@ function add_submodule
     local rep_url=${1}
     local env_mod_name=${2}
     printf "${rep_url} is adding as submodule...\n";
-    git submodule add ${rep_url};
+    git submodule add ${rep_url}  ||  die 1 "We cannot add ${rep_url} as submodule : Please check it" ;
     printf "add ignore = dirty ... \n"
-    sed -i~ "/\\/${env_mod_name}/a\\\tignore = all" .gitmodules
+    sed -i~ "/\\/${env_mod_name}/a\\\tignore = all" .gitmodules  ||  die 1 "We cannot add ignore = dirty into .gitmodules : Please check it" ;
     printf "\n";
-    git submodule update --init --recursive
+    git submodule update --init --recursive  ||  die 1 "We cannot init the gitsubmodule : Please check it" ;
 }  
 
 
