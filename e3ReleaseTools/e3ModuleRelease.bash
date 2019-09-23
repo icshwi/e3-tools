@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #  Copyright (c) 2018 - Present Jeong Han Lee
-#  Copyright (c) 2018 - Present European Spallation Source ERIC
+#  Copyright (c) 2018 - 2019    European Spallation Source ERIC
 #
 #  The program is free software: you can redistribute
 #  it and/or modify it under the terms of the GNU General Public License
@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Thursday, February  7 23:08:54 CET 2019
-#   version : 0.0.11
+#   date    : Monday, September 23 14:54:29 CEST 2019
+#   version : 0.1.0
 #
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
@@ -93,7 +93,14 @@ print_options
 MODULE_TOP=${PWD}
 
 # Get all branches
-git fetch origin
+
+printf ">> Stage 0 << \n";
+printf "   Now we are fetching all into e3 module ...\n"
+echo "    "
+git fetch --all
+printf "\n"
+
+
 
 
 if [[ "$(basename ${MODULE_TOP})" =~ "e3-require" ]] ; then
@@ -246,8 +253,8 @@ case "$1" in
 
     release)
 	if [ "$ANSWER" == "NO" ]; then
-	    printf ">>\n";
-	    printf "  Now you are entering the release e3 module...\n"
+	    printf ">> Stage 1 << \n";
+	    printf "   Now you are entering the release e3 module...\n"
 	    yes_or_no_to_go
 	else
 	    echo ""
@@ -259,24 +266,24 @@ case "$1" in
 
 esac
 
-
 if [[ "$BRANCH" =~ "master" ]] ; then
 #    local_branch_exist=$(git branch | grep $MODULE_BRANCH_NAME)
     
     ### Check whether a branch with the module version or not
-    remote_branch_exist=$(git branch -r |grep $MODULE_BRANCH_NAME)
+    remote_branch_exist=$(git branch -r -a |grep "remotes/origin/${MODULE_BRANCH_NAME}")
+    
     if [ -z "${remote_branch_exist}" ] ; then
 	# There is no branch, so create it
 	# In this step, we don't have any conflict theoritically.
 	#
-	printf ">>\n";
-	printf "  No Branch %s is found, creating ....\n" "${MODULE_BRANCH_NAME}"
+	printf ">> Stage 2\n";
+	printf "   No Branch %s is found, creating ....\n" "${MODULE_BRANCH_NAME}"
 	printf "\n";
 
 	if [ "$ANSWER" == "NO" ]; then
 	    yes_or_no_to_go
 	fi
-	
+       
 	git checkout -b ${MODULE_BRANCH_NAME}
 	git commit -m "adding ${MODULE_BRANCH_NAME}";
 	# The first time, we also need to do git tag in that branch
@@ -310,10 +317,10 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 	printf "\n";
 	
     else
-	printf ">>\n";
-	printf "  The branch %s is found remotely.\n" "${MODULE_BRANCH_NAME}"
+	
+	printf ">> Stage 2\n";
+	printf "   he branch %s is found remotely.\n" "${MODULE_BRANCH_NAME}"
 	branch_hash_tag=$(git rev-parse --short ${MODULE_BRANCH_NAME})
-
 
 	if [ "$branch_hash_tag" = "${HEAD_HASH_TAG}" ]; then
 	    printf "  Master %s is the same as Branch %s %s\n" "${HEAD_HASH_TAG}" "${MODULE_BRANCH_NAME}" "$branch_hash_tag"
