@@ -17,14 +17,14 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Thursday, March 28 09:58:42 CET 2019
-# version : 0.0.3
+# Date    : Thursday, September 26 13:01:24 CEST 2019
+# version : 0.0.4
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
 declare -gr SC_TOP="${SC_SCRIPT%/*}"
 declare -gr SC_LOGDATE="$(date +%y%m%d%H%M%S)"
-declare -g SC_VERSION="v0.0.3"
+declare -g SC_VERSION="v0.0.4"
 
 
 EXIST=1
@@ -54,7 +54,8 @@ function checkIfDir
 function get_latest_build
 {
     local url="$1";
-    local latest=$(curl -s -k $url | sed -e 's/<[^>]*>//g' | awk '{print $1}' | grep -o '^[0-9]*\/' |sort -r | head -1)
+#    local latest=$(curl -s -k $url | sed -e 's/<[^>]*>//g' | awk '{print $1}' | grep -o '^[0-9]*\/' |sort -r | head -1)
+    local latest=$(curl -s -k $url | sed -e 's/<[^>]*>//g' | grep -Po 'v[\d.]+' | awk '{print $1}' |sort -r | head -1)
     echo $latest;
 }
 
@@ -123,9 +124,22 @@ function install_toolchain
     unset DEFAULT_INSTALL_DIR
 }
 
-build=$(get_latest_build "${TOOLCHAIN_URL}")
+#
+# https://artifactory.esss.lu.se/artifactory/yocto/toolchain/
+# v0.0.8   19-Sep-2019 09:06 
+
+if [ -z "$1" ];  then
+    build=$(get_latest_build "${TOOLCHAIN_URL}")
+else
+    build="$1"
+fi
+
+#echo $build
+#exit
 
 download_toolchain ${build}
+
+
 install_toolchain
 
 exit
