@@ -19,14 +19,13 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Monday, September 23 14:54:29 CEST 2019
-#   version : 0.1.0
+#   date    : Friday, September 27 17:17:42 CEST 2019
+#   version : 0.1.1
 #
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
 declare -gr SC_TOP="$(dirname "$SC_SCRIPT")"
 declare -gr SC_LOGDATE="$(date +%y%m%d%H%M)"
-#declare -gr SC_USER="$(whoami)"
 declare -gr SC_HASH="$(git rev-parse --short HEAD)"
 
 declare -gr DEFAULT_BRANCH="master"
@@ -175,6 +174,7 @@ if ! [ -z "${IsBase}" ]; then
     else
 	base_version=$(read_version "${CONFIG_BASE}" "E3_BASE_VERSION")
     fi
+
     module_version=${base_version}
     require_version="NA"
     
@@ -231,18 +231,17 @@ printf "E3 REQUIRE VERSION : %38s\n" "${require_version}"
 ##
 
 
+MODULE_BRANCH_NAME=R-${module_version}
 
 MODULE_TAG_IN_BRANCH+=${base_version}
 MODULE_TAG_IN_BRANCH+="-"
 MODULE_TAG_IN_BRANCH+=${require_version}
 MODULE_TAG_IN_BRANCH+="/"
-MODULE_TAG_IN_BRANCH+=${module_version}
+MODULE_TAG_IN_BRANCH+=${MODULE_BRANCH_NAME}
 MODULE_TAG_IN_BRANCH+="-"
 MODULE_TAG_IN_BRANCH+=${HEAD_HASH_TAG}
 MODULE_TAG_IN_BRANCH+="-"
 MODULE_TAG_IN_BRANCH+=${SC_LOGDATE}
-
-MODULE_BRANCH_NAME=${module_version}
 
 printf "\n"
 printf "MODULE BRANCH      : %38s\n"   "$MODULE_BRANCH_NAME"
@@ -267,7 +266,6 @@ case "$1" in
 esac
 
 if [[ "$BRANCH" =~ "master" ]] ; then
-#    local_branch_exist=$(git branch | grep $MODULE_BRANCH_NAME)
     
     ### Check whether a branch with the module version or not
     remote_branch_exist=$(git branch -r -a |grep "remotes/origin/${MODULE_BRANCH_NAME}")
@@ -283,11 +281,13 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 	if [ "$ANSWER" == "NO" ]; then
 	    yes_or_no_to_go
 	fi
-       
-	git checkout -b ${MODULE_BRANCH_NAME}
+
+
+	git branch "${MODULE_BRANCH_NAME}"  || die 1 "STRANGE : We cannot create ${MODULE_BRANCH_NAME}. Please check it"
+	git checkout ${MODULE_BRANCH_NAME}  || die 1 "STRANGE : We cannot swtch into branch ${MODULE_BRANCH_NAME}. Please check it"
 	git commit -m "adding ${MODULE_BRANCH_NAME}";
 	# The first time, we also need to do git tag in that branch
-	printf ">>\n";
+	printf ">> Stage 3\n";
 	printf "  Creating .... the tag %s\n" "$MODULE_TAG_IN_BRANCH"
 	git tag -a $MODULE_TAG_IN_BRANCH -m "add $MODULE_TAG_IN_BRANCH"
 
@@ -297,8 +297,8 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 	    read -p "  Do you want to continue (y/N)? " answer
 	    case ${answer:0:1} in
 		y|Y )
-		    git push origin ${MODULE_BRANCH_NAME};
-		    git push origin ${MODULE_TAG_IN_BRANCH};
+		    git push origin ${MODULE_BRANCH_NAME}    || die 1 "Error : We cannot push origin ${MODULE_BRANCH_NAME}"
+		    git push origin ${MODULE_TAG_IN_BRANCH}  || die 1 "Error : We cannot push origin ${MODULE_TAG_IN_BRANCH}"
 		    ;;
 		* )
 		    printf ">>\n"
@@ -308,18 +308,17 @@ if [[ "$BRANCH" =~ "master" ]] ; then
    		    ;;
 	    esac
 	else
-	    git push origin ${MODULE_BRANCH_NAME};
-	    git push origin ${MODULE_TAG_IN_BRANCH};
+	    git push origin ${MODULE_BRANCH_NAME}   || die 1 "Error : We cannot push origin ${MODULE_BRANCH_NAME}"
+	    git push origin ${MODULE_TAG_IN_BRANCH} || die 1 "Error : We cannot push origin ${MODULE_TAG_IN_BRANCH}"
 	fi
 	
 	printf ">> \n"
-	git checkout  ${TARGET_SRC}
-	printf "\n";
+	git checkout  ${TARGET_SRC} || die 1 "Error : We cannot checkout ${TARGET_SRC}\n";
 	
     else
 	
 	printf ">> Stage 2\n";
-	printf "   he branch %s is found remotely.\n" "${MODULE_BRANCH_NAME}"
+	printf "   The branch %s is found remotely, locally, or both.\n" "${MODULE_BRANCH_NAME}"
 	branch_hash_tag=$(git rev-parse --short ${MODULE_BRANCH_NAME})
 
 	if [ "$branch_hash_tag" = "${HEAD_HASH_TAG}" ]; then
@@ -335,12 +334,12 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 		yes_or_no_to_go
 	    fi
 	    
-	    git checkout ${TARGET_SRC}
+	    git checkout ${TARGET_SRC} || die 1 "Error : We cannot checkout ${TARGET_SRC}\n";
 	    # We merge all changes into ${MODULE_BRANCH_NAME}, because the all files within master at this moment
 	    # are "release" one. It works both with three golden versions within e3.
-	    git merge -s ours ${MODULE_BRANCH_NAME}
-	    git checkout ${MODULE_BRANCH_NAME}
-	    git merge ${TARGET_SRC}
+	    git merge -s ours ${MODULE_BRANCH_NAME}  || die 1 "Error : We cannot git merge -s ours ${MODULE_BRANCH_NAME}\n";
+	    git checkout ${MODULE_BRANCH_NAME} || die 1 "Error : We cannot checkout ${MODULE_BRANCH_NAME}\n";
+	    git merge ${TARGET_SRC} || die 1 "Error : We cannot merge ${TARGET_SRC}\n";
 
 	    printf " Now you are committing and creating a tag ....\n";
 	    if [ "$ANSWER" == "NO" ]; then
@@ -357,8 +356,8 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 		    read -p "  Do you want to continue (y/N)? " answer
 		    case ${answer:0:1} in
 			y|Y )
-			    git push origin ${MODULE_BRANCH_NAME};
-			    git push origin ${MODULE_TAG_IN_BRANCH};
+			    git push origin ${MODULE_BRANCH_NAME}   || die 1 "Error : We cannot push origin ${MODULE_BRANCH_NAME}"
+			    git push origin ${MODULE_TAG_IN_BRANCH} || die 1 "Error : We cannot push origin ${MODULE_TAG_IN_BRANCH}"
 			    ;;
 			* )
 			    printf ">>\n"
@@ -368,8 +367,8 @@ if [[ "$BRANCH" =~ "master" ]] ; then
    			    ;;
 		    esac
 		else
-		    git push origin ${MODULE_BRANCH_NAME};
-		    git push origin ${MODULE_TAG_IN_BRANCH};
+		    git push origin ${MODULE_BRANCH_NAME}   || die 1 "Error : We cannot push origin ${MODULE_BRANCH_NAME}"
+		    git push origin ${MODULE_TAG_IN_BRANCH} || die 1 "Error : We cannot push origin ${MODULE_TAG_IN_BRANCH}"
 		fi
 		
 	    
