@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Monday, September  9 20:50:24 CEST 2019
-#   version : 1.0.1
+#   date    : Monday, October  7 12:18:18 CEST 2019
+#   version : 1.0.2
 
 
 EXIST=1
@@ -462,8 +462,8 @@ include \$(E3_REQUIRE_CONFIG)/DECOUPLE_FLAGS
 #
 # ifeq (\$(T_A),linux-x86_64)
 # USR_LDFLAGS += -Wl,--enable-new-dtags
-# USR_LDFLAGS += -Wl,-rpath=\$(E3_MODULES_VENDOR_LIBS_LOCATION)
 # USR_LDFLAGS += -L\$(E3_MODULES_VENDOR_LIBS_LOCATION)
+# USR_LDFLAGS += -Wl,-rpath,"\\$\$ORIGIN/../../../../../siteLibs/vendor/\$(E3_MODULE_NAME)/\$(E3_MODULE_VERSION)"
 # USR_LDFLAGS += -lflycapture
 # endif
 
