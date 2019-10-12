@@ -17,14 +17,14 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Thursday, September 26 13:01:24 CEST 2019
-# version : 0.0.4
+# Date    : Saturday, October 12 16:08:41 CEST 2019
+# version : 0.0.5
 
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
 declare -gr SC_TOP="${SC_SCRIPT%/*}"
 declare -gr SC_LOGDATE="$(date +%y%m%d%H%M%S)"
-declare -g SC_VERSION="v0.0.4"
+declare -g SC_VERSION="v0.0.5"
 
 
 EXIST=1
@@ -38,7 +38,7 @@ function popd  { builtin popd  "$@" > /dev/null; }
 function checkIfDir
 {
     
-    local dir=$1
+    local dir="$1"; shift;
     local result=""
     if [ ! -d "$dir" ]; then
 	result=$NON_EXIST
@@ -53,9 +53,12 @@ function checkIfDir
 
 function get_latest_build
 {
-    local url="$1";
-#    local latest=$(curl -s -k $url | sed -e 's/<[^>]*>//g' | awk '{print $1}' | grep -o '^[0-9]*\/' |sort -r | head -1)
-    local latest=$(curl -s -k $url | sed -e 's/<[^>]*>//g' | grep -Po 'v[\d.]+' | awk '{print $1}' |sort -r | head -1)
+    local url="$1"; shift;
+    local tempfile=$(mktemp -q);
+    {
+	curl -s -k $url | sed -e 's/<[^>]*>//g' | grep -Po 'v[\d.]+' | awk '{print $1}'
+    } > ${tempfile}
+    local latest=$(sort -V ${tempfile} | tail -1)
     echo $latest;
 }
 
@@ -134,13 +137,19 @@ else
     build="$1"
 fi
 
-#echo $build
-#exit
 
-download_toolchain ${build}
-
-
-install_toolchain
+# In order to check which version will be the latest one
+# bash setup_toolchain.bash "" "a"
+# Then, the following command will install the latest one
+#
+# bash setup_toolchain.bash 
+if [ -z "$2" ]; then
+    download_toolchain ${build}
+    install_toolchain
+else
+    echo "Dry run to check the latest version"
+    echo $build
+fi
 
 exit
-
+    
