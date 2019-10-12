@@ -17,7 +17,7 @@ env:
     - E3_SRC_PATH=${TRAVIS_BUILD_DIR}/e3
     - BASE=7.0.3
     - TAG=7.0.3
-    - REQUIRE=3.1.1
+    - REQUIRE=3.1.2
 
     
     
