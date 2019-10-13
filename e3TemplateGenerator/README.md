@@ -21,16 +21,14 @@ Usage    : ./e3TemplateGenerator.bash [-m <module_configuraton_file>] [-d <modul
                -d : a destination, optional, Default $PWD : ../e3-tools/e3TemplateGenerator 
                -u : an existent module path for updating configuration files
                -r : generate the RELEASE file with your EPICS env variables instead of the default values
-###
+### Option `-r` 
 If the -r option is used, the RELEASE file will look like the following:
-
+```
 EPICS_BASE:=$(EPICS_BASE)
-
 E3_REQUIRE_NAME:=$(E3_REQUIRE_NAME)
-
 E3_REQUIRE_VERSION:=$(E3_REQUIRE_VERSION)
-
 ....
+```
 
 In this way the Makefile will fetch the above variables at compilation time from you EPICS environment (be sure to source it before), avoiding the needs to edit the file to change the default values if you need to change them. This can be useful if for instance you have multiple version of EPICS and you don't want to edit the RELEASE file everytime you compile your APPS with different version of EPICS. 
 
