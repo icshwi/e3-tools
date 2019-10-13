@@ -19,15 +19,17 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Saturday, October 12 03:27:20 CEST 2019
-#   version : 1.0.4
+#   date    : Sunday, October 13 22:19:12 CEST 2019
+#   version : ${SC_VERSION}
 
+declare -gr SC_VERSION="1.0.5"
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
 declare -gr SC_TOP="$(dirname "$SC_SCRIPT")"
 declare -gr SC_LOGDATE="$(date +%Y%b%d-%H%M-%S%Z)"
 declare -gr SC_USER="$(whoami)"
 declare -gr SC_HASH="$(git rev-parse --short HEAD)"
+
 
 declare -g  LOG=".MODULE_LOG"
 declare -g  UPDATE_LOG=".UPDATE_MODULE_LOG";
@@ -324,10 +326,22 @@ if [ -z "${updateSource}" ]; then
 	printf ">>\n";
 	printf "Script is used     : ${SC_SCRIPTNAME}\n";
 	printf "Script Path        : ${SC_TOP}\n";
+	printf "Script Version     : ${SC_VERSION}\n";
+	printf "Script Run Time    : ${SC_LOGDATE}\n";
 	printf "User               : ${SC_USER}\n";
-	printf "Log Time           : ${SC_LOGDATE}\n";
-	printf "e3 repo Hash       : ${SC_HASH}\n";
-	
+	printf "e3-tools Hash      : ${SC_HASH}\n";
+	printf ">>\n";
+	printf ">> git diff \n";
+	git diff
+	printf "\n";
+	printf ">>\n";
+	printf ">> git diff --cached\n";
+	git diff --cached
+	printf "\n";
+	printf ">>\n";
+	printf ">> git diff HEAD\n";
+	git diff HEAD
+	printf "\n";
 	module_info;
 	
     } >> ${E3_MODULE_DEST}/docs/${LOG}
