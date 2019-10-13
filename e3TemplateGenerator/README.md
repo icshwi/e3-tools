@@ -34,7 +34,7 @@ E3_REQUIRE_VERSION:=$(E3_REQUIRE_VERSION)
 
 In this way the Makefile will fetch the above variables at compilation time from you EPICS environment (be sure to source it before), avoiding the needs to edit the file to change the default values if you need to change them. This can be useful if for instance you have multiple version of EPICS and you don't want to edit the RELEASE file everytime you compile your APPS with different version of EPICS. 
 
-## Site Apps / IOCs (siteApps)
+## siteMods
 
 ### Genesys GEN 5kW Power Supply 
 
@@ -52,9 +52,6 @@ E3_TARGET_URL:=https://github.com/icshwi
 $ bash e3TemplateGenerator.bash -m modules_conf/genesysGEN5kWPS.conf
 ```
 
-
-## Site Modules (siteMods)
-
 ### mrfioc2
 
 * mrfioc2.conf
@@ -68,7 +65,7 @@ E3_TARGET_URL:=https://github.com/icshwi
 * generate the e3-mrfioc2 template 
 
 ```
-$ bash e3TemplateGenerator.bash -m modules_conf/mrfioc2.conf -y
+$ bash e3TemplateGenerator.bash -m modules_conf/mrfioc2.conf
 ```
 
 
@@ -85,25 +82,8 @@ E3_TARGET_URL:=https://github.com/icshwi
 * generate the e3-sis8300 template 
 
 ```
-$ bash e3TemplateGenerator.bash -m modules_conf/sis8300.conf -y
+$ bash e3TemplateGenerator.bash -m modules_conf/sis8300.conf 
 ```
-
-### ecmctraining
-
-* ecmctraining.conf
-```
-EPICS_MODULE_NAME:=ecmctraining
-E3_MODULE_SRC_PATH:=ecmctraining
-EPICS_MODULE_URL:=https://bitbucket.org/europeanspallationsource
-E3_TARGET_URL:=https://github.com/icshwi
-```
-
-* generate the e3-ecmctraining template 
-
-```
-$ bash e3TemplateGenerator.bash -m modules_conf/ecmctraining.conf -y
-```
-
 
 # Create NON existent E3 Apps with local source files
 Since we would like to keep all source files within e3 path, we don't need to define ```EPICS_MODULE_URL```
@@ -153,11 +133,4 @@ exampleApp/
     └── [jhlee     455]  sncExample.stt
 ```
 
-
-
-# Update existent E3 Apps / Modules
-
-```
-$ bash e3TemplateGenerator.bash -u e3-iocStats
-```
 
