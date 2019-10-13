@@ -1,8 +1,8 @@
-E3 Module / Application Template Builder
+E3 Module Template Builder
 ====
 
 
-# Create NON existent E3 Apps / Modules with remote source files
+# Create NON existent E3 Modules with remote source files
 
 
 One should define and understand the following variables first. It is important to understand what differences are
