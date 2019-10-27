@@ -19,8 +19,8 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Monday, October  7 12:18:18 CEST 2019
-#   version : 1.0.2
+#   date    : Sunday, October 27 23:23:35 CET 2019
+#   version : 1.0.3
 
 
 EXIST=1
@@ -209,7 +209,7 @@ function add_submodule
     printf "${rep_url} is adding as submodule...\n";
     git submodule add ${rep_url}  ||  die 1 "We cannot add ${rep_url} as submodule : Please check it" ;
     printf "add ignore = dirty ... \n"
-    sed -i~ "/\\/${env_mod_name}/a\\\tignore = all" .gitmodules  ||  die 1 "We cannot add ignore = dirty into .gitmodules : Please check it" ;
+    sed -i~ "/\\/${env_mod_name}/a\\\tignore = dirty" .gitmodules  ||  die 1 "We cannot add ignore = dirty into .gitmodules : Please check it" ;
     printf "\n";
     git submodule update --init --recursive  ||  die 1 "We cannot init the gitsubmodule : Please check it" ;
 }  
