@@ -1,3 +1,4 @@
+```
 sudo systemctl stop anacron.timer
 sudo systemctl disable anacron.timer
 Removed /etc/systemd/system/timers.target.wants/anacron.timer.
@@ -5,7 +6,7 @@ sudo systemctl mask anacron.timer
 Created symlink /etc/systemd/system/anacron.timer → /dev/null.
 
 
-ocuser@ip7-21:~/ics_gitsrc/e3-tools/rt_conf$ sudo systemctl stop apt-daily-upgrade.timer
+iocuser@ip7-21:~/ics_gitsrc/e3-tools/rt_conf$ sudo systemctl stop apt-daily-upgrade.timer
 iocuser@ip7-21:~/ics_gitsrc/e3-tools/rt_conf$ sudo systemctl disable apt-daily-upgrade.timer
 Removed /etc/systemd/system/timers.target.wants/apt-daily-upgrade.timer.
 iocuser@ip7-21:~/ics_gitsrc/e3-tools/rt_conf$ sudo systemctl mask apt-daily-upgrade.timer
@@ -29,3 +30,4 @@ apt-daily-upgrade.timer
 apt-daily.timer
 sound.target
 alsa-restore
+```
