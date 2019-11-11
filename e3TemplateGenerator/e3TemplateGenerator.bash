@@ -19,10 +19,10 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Sunday, October 13 22:19:12 CEST 2019
+#   date    : Monday, November 11 13:08:23 CET 2019
 #   version : ${SC_VERSION}
 
-declare -gr SC_VERSION="1.0.5"
+declare -gr SC_VERSION="1.0.6"
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
 declare -gr SC_TOP="$(dirname "$SC_SCRIPT")"
@@ -37,7 +37,7 @@ declare -g  UPDATE_LOG=".UPDATE_MODULE_LOG";
 declare -g  E3_MODULE_DEST=""
 
 declare -gr _E3_EPICS_PATH=/epics
-declare -gr _E3_BASE_VERSION=7.0.3
+declare -gr _E3_BASE_VERSION=7.0.3.1
 declare -gr _E3_REQUIRE_NAME=require
 declare -gr _E3_REQUIRE_VERSION=3.1.2
 declare -gr _EPICS_BASE=${_E3_EPICS_PATH}/base-${_E3_BASE_VERSION}
