@@ -269,8 +269,10 @@ if [[ "$BRANCH" =~ "master" ]] ; then
     
     ### Check whether a branch with the module version or not
     remote_branch_exist=$(git branch -r -a |grep "remotes/origin/${MODULE_BRANCH_NAME}")
+    local_branch_exist=$(git branch -r -a |grep "${MODULE_BRANCH_NAME}")
+
     
-    if [ -z "${remote_branch_exist}" ] ; then
+    if [ -z "${remote_branch_exist}" ] && [ -z "${local_branch_exist}" ]; then
 	# There is no branch, so create it
 	# In this step, we don't have any conflict theoritically.
 	#
@@ -318,12 +320,19 @@ if [[ "$BRANCH" =~ "master" ]] ; then
     else
 	
 	printf ">> Stage 2\n";
-	printf "   The branch %s is found remotely, locally, or both.\n" "${MODULE_BRANCH_NAME}"
+	if ! [ -z "${remote_branch_exist}" ]; then
+	    printf "   The branch %s is found remotely.\n" "${MODULE_BRANCH_NAME}"
+	fi
+	if ! [ -z "${local_branch_exist}" ]; then
+	    printf "   The branch %s is found locally.\n" "${MODULE_BRANCH_NAME}"
+	fi
 	# Get the branch hash id to compare the master branch
 	# with the asumption that that branch is in origin
 	branch_hash_tag=$(git rev-parse --short origin/${MODULE_BRANCH_NAME})
 
+	printf "\n";
 	if [ "$branch_hash_tag" = "${HEAD_HASH_TAG}" ]; then
+
 	    printf "  Master %s is the same as Branch %s %s\n" "${HEAD_HASH_TAG}" "${MODULE_BRANCH_NAME}" "$branch_hash_tag"
 	    printf "  So, we end here.\n"
 	    printf ">>\n";
@@ -337,13 +346,16 @@ if [[ "$BRANCH" =~ "master" ]] ; then
 	    fi
 
 	    # Here TARGET_SRC is master branch
+	    printf ">>> 0 : git checkout %s\n", "${TARGET_SRC}" 
 	    git checkout "${TARGET_SRC}"               || die 1 "Error : We cannot checkout ${TARGET_SRC}\n";
+	    git pull --rebase origin "${TARGET_SRC}"   || die 1 "Error : We cannot pull --rebase origin  ${TARGET_SRC}\n";
 	    # We merge all changes into ${MODULE_BRANCH_NAME}, because the all files within master at this moment
 	    # are "release" one. It works both with three golden versions within e3.
-	    git merge -s ours "${MODULE_BRANCH_NAME}"  || die 1 "Error : We cannot git merge -s ours ${MODULE_BRANCH_NAME}\n";
+	    git merge -s ours "origin/${MODULE_BRANCH_NAME}"  || die 1 "Error : We cannot git merge -s ours ${MODULE_BRANCH_NAME}\n";
 	    git checkout "${MODULE_BRANCH_NAME}"       || die 1 "Error : We cannot checkout ${MODULE_BRANCH_NAME}\n";
 	    git merge "${TARGET_SRC}"                  || die 1 "Error : We cannot merge ${TARGET_SRC}\n";
 
+	    
 	    printf " Now you are committing and creating a tag ....\n";
 	    if [ "$ANSWER" == "NO" ]; then
 		yes_or_no_to_go
