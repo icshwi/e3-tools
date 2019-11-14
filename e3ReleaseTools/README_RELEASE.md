@@ -3,7 +3,8 @@ The e3ModuleRelease Practical Examples
 
 ## Prerequirement
 
-Before running the e3ModuleRelease, there is no changes in master branch. Everything should be committed to the remote repository, before doing this work. 
+Before running the e3ModuleRelease, there is no changes in master branch. Everything should be committed to the remote repository, before doing this work. Thus, do `clone` repository from scratch, and do `e3ModuleRelease` without any changes in that repository. 
+
 
 
 ## e3-base Release Example
