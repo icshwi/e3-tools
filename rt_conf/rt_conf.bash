@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 #  Copyright (c) 2018 - 2019 Jeong Han Lee
 #  Copyright (c) 2018 - 2019 European Spallation Source ERIC
@@ -18,9 +18,9 @@
 #
 # Author  : Jeong Han Lee
 # email   : jeonghan.lee@gmail.com
-# Date    : Monday, June 10 23:22:40 CEST 2019
+# Date    : Thursday, November 21 16:54:13 CET 2019
 #
-# version : 0.1.4
+# version : 0.1.6
 
 # Only aptitude can understand the extglob option
 shopt -s extglob
@@ -167,7 +167,7 @@ function debian_pkgs
     printf "Removing .... %s\n" ${remove_pkg_name}
     ${SUDO_CMD} apt remove -y postfix sendmail cups
     printf "Installing .... ethtool\n";
-    ${SUDO_CMD} apt install -y aptitude ethtool libnuma-dev 
+    ${SUDO_CMD} apt install -y aptitude ethtool build-essential libnuma-dev 
 }
 
 
