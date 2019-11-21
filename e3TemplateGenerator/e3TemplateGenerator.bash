@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 #  Copyright (c) 2018 - 2019    Jeong Han Lee
 #  Copyright (c) 2018 - 2019    European Spallation Source ERIC
@@ -22,7 +22,7 @@
 #   date    : Monday, November 11 13:08:23 CET 2019
 #   version : ${SC_VERSION}
 
-declare -gr SC_VERSION="1.0.6"
+declare -gr SC_VERSION="1.0.7"
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
 declare -gr SC_TOP="$(dirname "$SC_SCRIPT")"
@@ -239,7 +239,6 @@ shift $((OPTIND-1))
 if [ -z "${targetpath}" ]; then
     E3_MODULE_PATH=${PWD}
 fi
-
 
 if [ -z "${updateSource}" ]; then
     # REMOTE SRC or LOCAL SRC
