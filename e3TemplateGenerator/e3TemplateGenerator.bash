@@ -19,10 +19,10 @@
 #
 #   author  : Jeong Han Lee
 #   email   : jeonghan.lee@gmail.com
-#   date    : Monday, November 11 13:08:23 CET 2019
+#   date    : Tuesday, November 26 16:40:56 CET 2019
 #   version : ${SC_VERSION}
 
-declare -gr SC_VERSION="1.0.7"
+declare -gr SC_VERSION="1.0.8"
 declare -gr SC_SCRIPT="$(realpath "$0")"
 declare -gr SC_SCRIPTNAME=${0##*/}
 declare -gr SC_TOP="$(dirname "$SC_SCRIPT")"
