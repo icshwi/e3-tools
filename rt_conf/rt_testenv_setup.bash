@@ -121,14 +121,14 @@ function print_usages
 
 function centos_pkgs
 {
-    local installing_pkgs="autoconf";
+    local installing_pkgs="autoconf python3";
     printf "Installing .... %s\n" "$installing_pkgs" ;
     ${SUDO_CMD} yum -y install ${installing_pkgs};
 }
 
 function debian_pkgs
 {
-    local installing_pkgs="autoconf";
+    local installing_pkgs="autoconf python3";
     printf "Installing .... %s\n" "$installing_pkgs" ;
     ${SUDO_CMD} apt install -y "$installing_pkgs"
 }
