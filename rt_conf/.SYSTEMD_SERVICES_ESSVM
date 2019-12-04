@@ -1,8 +1,0 @@
-tomcat@*.service
-archiver-appliance
-alarm-server@*.service
-rsync-epics
-mariadb
-firebeat
-activemq
-#
