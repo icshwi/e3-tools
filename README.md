@@ -17,10 +17,6 @@ ESS EPICS Environment Module Release Tool.
 [README.md](./e3ReleaseTools/README.md) in more detail. 
   
   
-## rt_conf
-Linux RT PREEMPT Kernel Installation and Configuration. 
-[README.md](./rt_conf/README.md) in more detail. 
-
 ## git_helper_scripts
 
 ## scripts
