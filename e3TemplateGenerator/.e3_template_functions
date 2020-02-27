@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+#
+#  Copyright (c) 2020 -         Simon Rose
+#  Copyright (c) 2018 - 2019    European Spallation Source ERIC
+#
+#  The program is free software: you can redistribute
+#  it and/or modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation, either version 2 of the
+#  License, or any newer version.
+#
+#  This program is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+#  more details.
+#
+#  You should have received a copy of the GNU General Public License along with
+#  this program. If not, see https://www.gnu.org/licenses/gpl-2.0.txt
+#
+#
+#   author  : Simon Rose
+#   email   : simon.rose@ess.eu
+#   date    : Thursday, February 27, 2020
+#   version : 1.0.0
+
+declare -r SC_VERSION="1.0.8"
+declare -r SC_SCRIPT="$(realpath "$0")"
+declare -r SC_SCRIPTNAME=${0##*/}
+declare -r SC_TOP="$(dirname "$SC_SCRIPT")"
+declare -r SC_LOGDATE="$(date +%Y%b%d-%H%M-%S%Z)"
+declare -r SC_USER="$(whoami)"
+declare -r SC_HASH="$(git rev-parse --short HEAD)"
+declare -r SC_CURYEAR="$(date +%Y)"
+
+declare -r _TEMPLATE_DIR="templates/"
+
+function create_file_from_template {
+    if [ $# -ne 3 ]; then
+        >&2 echo "Invalid number of arguments"
+        exit 1
+    fi
+
+    template_file=$1
+    output_file=$2
+    vars=$3
+
+    tempfile=$(mktemp)
+    if [ $? -ne 0 ]; then
+        >&2 echo "Error creating temporary file."
+        exit 1
+    fi
+    trap 'rm -f "$tempfile"' EXIT
+
+    for var in $vars; do
+        eval val='$'$var
+        echo "s/\${$var}/$val/g" >> $tempfile 
+    done
+
+    sed -f $tempfile $template_file > $output_file
+}
+
+function add_module_makefile {
+    # Creates a makefile from the template add_module.Makefile
+    # 
+    # Fills in the following variables:
+    # - SC_USER
+    # - SC_HASH
+    # - SC_MODULE
+    # - SC_LOGDATE
+    # - SC_SCRIPTNAME
+    # - SC_CURYEAR
+
+    SC_MODULE=$1
+
+    create_file_from_template "${_TEMPLATE_DIR}module.Makefile" "${SC_MODULE}.Makefile" "SC_USER SC_HASH SC_MODULE SC_LOGDATE SC_SCRIPTNAME SC_CURYEAR"
+}
+
+function add_gitignore
+{
+    create_file_from_template "${_TEMPLATE_DIR}template.gitignore" ".gitignore" "_E3_MODULE_SRC_PATH"
+}
+
+function add_e3_makefile
+{
+    create_file_from_template "${_TEMPLATE_DIR}Makefile" "e3.Makefile" "SC_LOGDATE"
+}
+
+function add_patch
+{
+    create_file_from_template "${_TEMPLATE_DIR}README.md" "README.md" ""
+    create_file_from_template "${_TEMPLATE_DIR}HISTORY.md" "HISTORY.md" ""
+}
+
+
+function add_CONFIG_OPTIONS
+{
+    create_file_from_template "${_TEMPLATE_DIR}CONFIG_OPTIONS" "CONFIG_OPTIONS" ""
+}
+
+
+
+function add_RELEASE
+{
+    local _SUFFIX=$1
+    create_file_from_template "${_TEMPLATE_DIR}RELEASE" "RELEASE${_SUFFIX}" "_EPICS_BASE _E3_REQUIRE_NAME _E3_REQUIRE_VERSION _SUFFIX"
+}
+
+
+function add_RELEASE_variables
+{
+    local _EPICS_BASE='$(EPICS_BASE)'
+    local _E3_REQUIRE_NAME='$(E3_REQUIRE_NAME)'
+    local _E3_REQUIRE_VERSION='$(E3_REQUIRE_VERSION)'
+
+    add_RELEASE ""
+}
+
+
+function add_RELEASE_DEV
+{
+    add_RELEASE "_DEV"    
+}
+
+
+function add_RELEASE_variables
+{
+    local _EPICS_BASE='$(EPICS_BASE)'
+    local _E3_REQUIRE_NAME='$(E3_REQUIRE_NAME)'
+    local _E3_REQUIRE_VERSION='$(E3_REQUIRE_VERSION)'
+
+    add_RELEASE "_DEV"
+}
+
+
+function add_rules_module
+{
+    create_file_from_template "${_TEMPLATE_DIR}RULES_MODULE" "RULES_MODULE" ""
+}
+
+function add_rules_dkms_l
+{
+    create_file_from_template "${_TEMPLATE_DIR}RULES_DKMS_L" "RULES_DKMS_L" ""
+}
+
+
+function add_configure_module
+{
+    add_rules_module;
+    add_rules_dkms_l;
+}
+
+
+
+
+##
+## The following functions are used to update the existent OLD e3-module based on require 3.0.0
+##
+function read_config_module
+{
+    local FILENAME="$1"
+    local PREFIX1="-include \$(TOP)/configure/CONFIG_MODULE"
+    local PREFIX2="-include \$(TOP)/configure/CONFIG_OPTIONS"
+    local val=""
+    while IFS= read -r line; do
+	if [ "$line" ]; then
+	    [[ "$line" =~ ^#.*$ ]] && continue
+	    if [[ "$line" =~ "${PREFIX1}" ]] ; then
+		echo "-include \$(TOP)/configure/CONFIG_OPTIONS"
+		echo "# The definitions shown below can also be placed in an untracked CONFIG_MODULE*.local"
+		echo "${line}";
+		echo "#";
+	    elif [[ "$line" =~ "${PREFIX2}" ]]; then
+		printf "";
+	    else
+		echo ${line}
+		echo "#"
+	    fi
+	fi
+    done < ${FILENAME}
+
+}
+
+
+
+function add_RELEASE_Update
+{
+    local _E3_REQUIRE_NAME="require"
+
+    add_RELEASE ""
+
+    add_RELEASE "_DEV"
+}
