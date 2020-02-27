@@ -17,6 +17,6 @@ The changes were tested in local environemnt, and commits to the forked reposito
 * Create p0 patch
 
 ```
-\$git diff feb8856 master --no-prefix > ../patch/Site/E3_MODULE_VERSION-what_ever_filename.p0.patch
+$git diff feb8856 master --no-prefix > ../patch/Site/E3_MODULE_VERSION-what_ever_filename.p0.patch
 ```
 

@@ -4,7 +4,7 @@ EPICS_BASE:=${_EPICS_BASE}
 E3_REQUIRE_NAME:=${_E3_REQUIRE_NAME}
 E3_REQUIRE_VERSION:=${_E3_REQUIRE_VERSION}
 
-# The definitions shown below can also be placed in an untracked RELEASE.local
--include \$(TOP)/../../RELEASE${_SUFFIX}.local
--include \$(TOP)/../RELEASE${_SUFFIX}.local
--include \$(TOP)/configure/RELEASE${_SUFFIX}.local
+# The definitions shown below can also be placed in an untracked RELEASE${_SUFFIX}.local
+-include $(TOP)/../../RELEASE${_SUFFIX}.local
+-include $(TOP)/../RELEASE${_SUFFIX}.local
+-include $(TOP)/configure/RELEASE${_SUFFIX}.local
