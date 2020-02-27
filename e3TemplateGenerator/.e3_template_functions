@@ -22,17 +22,6 @@
 #   date    : Thursday, February 27, 2020
 #   version : 1.0.0
 
-declare -r SC_VERSION="1.0.8"
-declare -r SC_SCRIPT="$(realpath "$0")"
-declare -r SC_SCRIPTNAME=${0##*/}
-declare -r SC_TOP="$(dirname "$SC_SCRIPT")"
-declare -r SC_LOGDATE="$(date +%Y%b%d-%H%M-%S%Z)"
-declare -r SC_USER="$(whoami)"
-declare -r SC_HASH="$(git rev-parse --short HEAD)"
-declare -r SC_CURYEAR="$(date +%Y)"
-
-declare -r _TEMPLATE_DIR="templates/"
-
 function create_file_from_template {
     if [ $# -ne 3 ]; then
         >&2 echo "Invalid number of arguments"
@@ -52,7 +41,7 @@ function create_file_from_template {
 
     for var in $vars; do
         eval val='$'$var
-        echo "s/\${$var}/$val/g" >> $tempfile 
+        echo "s%\${$var}%$val%g" >> $tempfile 
     done
 
     sed -f $tempfile $template_file > $output_file
@@ -81,7 +70,7 @@ function add_gitignore
 
 function add_e3_makefile
 {
-    create_file_from_template "${_TEMPLATE_DIR}Makefile" "e3.Makefile" "SC_LOGDATE"
+    create_file_from_template "${_TEMPLATE_DIR}e3.Makefile" "Makefile" "SC_LOGDATE SC_CURYEAR"
 }
 
 function add_patch
@@ -101,6 +90,12 @@ function add_CONFIG_OPTIONS
 function add_RELEASE
 {
     local _SUFFIX=$1
+
+    echo ">>>>"
+    echo $_EPICS_BASE
+    echo ">>>>"
+
+
     create_file_from_template "${_TEMPLATE_DIR}RELEASE" "RELEASE${_SUFFIX}" "_EPICS_BASE _E3_REQUIRE_NAME _E3_REQUIRE_VERSION _SUFFIX"
 }
 
@@ -183,6 +178,9 @@ function read_config_module
 
 function add_RELEASE_Update
 {
+    local _EPICS_BASE=$1;shift
+    local _E3_REQUIRE_VERSION=$1;shift
+
     local _E3_REQUIRE_NAME="require"
 
     add_RELEASE ""
